@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Welsing Zeiten – Live-Summen (v1.6.1)</title>
+<meta name="theme-color" content="#E2231A">
+<style>
+  :root{--bg:#0b0c10;--card:#15171c;--ink:#fff;--muted:#c7c7c9;--accent:#F28C00;--accent-ink:#1a1300;--primary:#E2231A;--line:#2a2e36;--focus:#FBB040}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.35 system-ui,Segoe UI,Roboto,Arial}
+  header{padding:10px 14px;position:sticky;top:0;z-index:9;background:var(--primary);border-bottom:4px solid var(--focus);display:flex;justify-content:space-between;align-items:center}
+  .ver{font-size:12px;background:#00000033;border:1px solid #ffffff33;padding:2px 6px;border-radius:8px}
+  .wrap{padding:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin:10px 0}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .grid{display:grid;gap:10px}.cols2{grid-template-columns:1fr 1fr}@media(max-width:720px){.cols2{grid-template-columns:1fr}}
+  label{font-size:13px;color:var(--muted)}
+  input,select,textarea,button{font-size:16px}
+  input[type="text"],textarea,select{background:#0f1116;color:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px;width:100%;-webkit-text-fill-color:#fff;color:#fff;caret-color:var(--focus)}
+  textarea{min-height:90px}
+  table{border-collapse:collapse;width:100%;background:#0f1116;border-radius:10px;overflow:hidden}
+  th,td{border:1px solid var(--line);padding:8px;text-align:center}
+  thead th{background:var(--focus);color:#000;font-weight:800}
+  .btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:12px 14px;font-weight:800;cursor:pointer;min-height:44px}
+  .btn.secondary{background:transparent;color:#fff;border:2px solid var(--accent)}
+  .pill{display:inline-block;background:#0f1116;border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:13px}
+  .footer{position:sticky;bottom:0;background:#0f1116;border-top:3px solid var(--primary);padding:8px 12px;display:flex;gap:8px;flex-wrap:wrap;z-index:9}
+  .footer>*{flex:1 1 48%}
+  iframe#printFrame{position:fixed;left:-9999px;top:-9999px;width:0;height:0;border:0}
+  .hcell input{ text-align:center; font-size:18px; font-weight:600 }
+</style>
+</head>
+<body>
+<header><b>Welsing Zeiten</b><div class="ver">v1.6.1 LIVE</div></header>
+
+<div class="wrap">
+  <div class="card">
+    <div class="grid cols2">
+      <div><label>KW</label><input id="kw" type="text" placeholder="z. B. KW 42" oninput="st.kw=this.value;save()"></div>
+      <div><label>Zeitraum</label><input id="zr" type="text" placeholder="z. B. 13.10.–18.10.2025" oninput="st.zr=this.value;save()"></div>
+    </div>
+    <div class="grid cols2">
+      <div><label>Monteur-Team (Komma)</label><input id="team" type="text" placeholder="z. B. Kevin, Jacub, Mario"></div>
+      <div><label>Sonntag</label>
+        <select id="sun" onchange="toggleSun(this.value)"><option value="0">aus</option><option value="1">an</option></select>
+      </div>
+    </div>
+    <div class="row" style="margin-top:6px">
+      <button class="btn secondary" onclick="applyTeam()">Team übernehmen</button>
+      <button class="btn" onclick="printWeekly()">Wochenbericht als PDF</button>
+    </div>
+    <div class="row" style="margin-top:6px;color:#ccc;font-size:14px">
+      Tipp: 7,5 oder 7.5 – beides möglich. „Woche gesamt“ springt jetzt sofort um.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row" style="margin-bottom:8px">
+      <button class="btn secondary" onclick="addKunde()">+ Kunde</button>
+      <button class="btn secondary" onclick="remKunde()">− Kunde</button>
+      <select id="sel" onchange="setSel(this.value)"></select>
+      <button class="btn" onclick="scrollSel()">Zu Kunde</button>
+    </div>
+    <div id="kunden"></div>
+  </div>
+
+  <div class="card">
+    <div class="row" style="justify-content:space-between;width:100%">
+      <b>Wochenübersicht (Summe je Monteur & Tag)</b>
+      <span style="color:#bbb">zum Nachschauen</span>
+    </div>
+    <div id="overview"></div>
+  </div>
+</div>
+
+<div class="footer">
+  <select id="sel2" onchange="setSel(this.value)"></select>
+  <button class="btn secondary" onclick="scrollSel()">Zu Kunde</button>
+  <button class="btn" onclick="printSel()">PDF (Kunde)</button>
+</div>
+<iframe id="printFrame"></iframe>
+
+<script>
+var st = {kw:"", zr:"", tage:["Mo","Di","Mi","Do","Fr","Sa"], team:["Kevin","Jacub","Mario","Martin","Tomas"], k:[]};
+var KEY="wz_live_sums_v161"; var lastSel = 0;
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(st)); }catch(e){} }
+function load(){ try{ var raw=localStorage.getItem(KEY); if(raw) st=JSON.parse(raw); }catch(e){} }
+
+function newK(){ return {n:"", a:"", az:"", ag:"", h: st.team.map(function(){return st.tage.map(function(){return ""})}), m:[{b:"",s:"",r:""}]}; }
+function addKunde(){ st.k.push(newK()); render(); setSel(st.k.length-1); save(); }
+function remKunde(){ if(st.k.length<=1){alert("Mindestens 1 Kunde.");return} var i=lastSel; st.k.splice(i,1); render(); if(i>=st.k.length)i=st.k.length-1; setSel(i); save(); }
+function setSel(v){ lastSel=parseInt(v||"0",10)||0; document.getElementById('sel').value=String(lastSel); document.getElementById('sel2').value=String(lastSel); }
+function scrollSel(){ var el=document.getElementById('k'+lastSel); if(el){ el.scrollIntoView({behavior:'smooth'}); } }
+
+function toggleSun(v){ if(v==="1"){ if(st.tage.indexOf("So")<0) st.tage.push("So"); } else { st.tage=st.tage.filter(function(t){return t!=="So"}); } fixShapes(); render(); save(); }
+function applyTeam(){ var arr=document.getElementById('team').value.split(',').map(function(s){return s.trim()}).filter(Boolean); if(arr.length){ st.team=arr; fixShapes(); render(); save(); } }
+
+function fixShapes(){
+  for(var i=0;i<st.k.length;i++){
+    var c=st.k[i];
+    while(c.h.length<st.team.length) c.h.push(st.tage.map(function(){return ""}));
+    while(c.h.length>st.team.length) c.h.pop();
+    for(var r=0;r<c.h.length;r++){
+      while(c.h[r].length<st.tage.length) c.h[r].push("");
+      while(c.h[r].length>st.tage.length) c.h[r].pop();
+    }
+  }
+}
+
+function sanitizeDec(s){
+  s = (s||"").toString();
+  s = s.replace(/,/g,".");      // Komma -> Punkt
+  s = s.replace(/[^0-9.]/g,""); // nur Ziffern und Punkt
+  var p = s.indexOf('.'); if(p>=0){ s = s.slice(0,p+1) + s.slice(p+1).replace(/\./g,""); } // nur 1 Punkt
+  return s;
+}
+
+function setHEl(i,r,d,el){
+  var v = sanitizeDec(el.value);
+  el.value = v; // sichtbar im Feld
+  st.k[i].h[r][d] = v;
+  save();
+  // Live-Sum update via event delegation is handled separately
+  // just update overview grid now:
+  renderLists();
+}
+
+function setF(i,f,v){ st.k[i][f]=v; save(); renderLists(); }
+function addM(i){ st.k[i].m.push({b:"",s:"",r:""}); save(); render(); }
+function delM(i,m){ st.k[i].m.splice(m,1); save(); render(); }
+function setM(i,m,f,v){ st.k[i].m[m][f]=v; save(); }
+
+function render(){
+  fixShapes();
+  document.getElementById('kw').value = st.kw;
+  document.getElementById('zr').value = st.zr;
+  document.getElementById('sun').value = st.tage.indexOf("So")>=0 ? "1":"0";
+  document.getElementById('team').value = st.team.join(', ');
+
+  var opts=''; for(var i=0;i<st.k.length;i++){ opts+='<option value="'+i+'">'+String(i+1).padStart(2,'0')+' — '+(st.k[i].n||'Kunde')+'</option>'; }
+  document.getElementById('sel').innerHTML=opts; document.getElementById('sel2').innerHTML=opts;
+
+  var out='';
+  for(var i=0;i<st.k.length;i++){ out += card(i); }
+  document.getElementById('kunden').innerHTML = out;
+
+  renderLists();
+  setSel(lastSel);
+}
+
+function renderLists(){
+  var grid = st.team.map(function(){ return st.tage.map(function(){ return 0; }); });
+  for(var k=0;k<st.k.length;k++){
+    for(var r=0;r<st.team.length;r++){
+      for(var d=0; d<st.tage.length; d++){
+        var v = parseFloat(st.k[k].h[r][d]||0)||0;
+        grid[r][d]+=v;
+      }
+    }
+  }
+  var th = st.tage.map(function(t){return '<th>'+t+'</th>'}).join('');
+  var rows='';
+  for(var r=0;r<st.team.length;r++){
+    var w=0, cells='';
+    for(var d=0;d<st.tage.length;d++){ cells+='<td>'+grid[r][d].toFixed(2)+'</td>'; w+=grid[r][d]; }
+    rows+='<tr><th style="text-align:left">'+esc(st.team[r])+'</th>'+cells+'<td><b>'+w.toFixed(2)+'</b></td></tr>';
+  }
+  document.getElementById('overview').innerHTML = '<table><thead><tr><th>Monteur</th>'+th+'<th>Woche gesamt</th></tr></thead><tbody>'+rows+'</tbody></table>';
+}
+
+function card(i){
+  var c=st.k[i];
+  var rows='';
+  for(var r=0;r<st.team.length;r++){
+    rows+='<tr><th style="text-align:left">'+esc(st.team[r])+'</th>';
+    for(var d=0;d<st.tage.length;d++){
+      var v=c.h[r][d]||'';
+      rows+='<td class="hcell"><input type="text" inputmode="decimal" placeholder="0" value="'+v+'" data-i="'+i+'" data-r="'+r+'" data-d="'+d+'" oninput="setHEl('+i+','+r+','+d+',this)"></td>';
+    }
+    // Sum cell (empty; will be filled by delegate updater)
+    rows+='<td class="sum-cell"><b>0.00</b></td></tr>';
+  }
+  var mats='';
+  for(var m=0;m<c.m.length;m++){
+    var it=c.m[m];
+    mats+='<tr><td><input type="text" value="'+escAttr(it.b)+'" oninput="setM('+i+','+m+',\'b\',this.value)"></td>'+
+          '<td><input type="text" value="'+escAttr(it.s)+'" oninput="setM('+i+','+m+',\'s\',this.value)"></td>'+
+          '<td><input type="text" value="'+escAttr(it.r)+'" oninput="setM('+i+','+m+',\'r\',this.value)"></td>'+
+          '<td><button class="btn secondary" onclick="delM('+i+','+m+')">−</button></td></tr>';
+  }
+  if(!mats) mats = '<tr><td colspan="4" style="text-align:center;color:#666">—</td></tr>';
+  return '<div class="card" id="k'+i+'">'+
+    '<div class="row"><span class="pill">Kunde '+String(i+1).padStart(2,"0")+'</span>'+
+    '<button class="btn" style="margin-left:auto" onclick="printK('+i+')">PDF (Kunde)</button></div>'+
+    '<div class="grid cols2" style="margin-top:6px">'+
+      '<div><label>Name</label><input type="text" value="'+escAttr(c.n)+'" oninput="setF('+i+',\'n\',this.value)"></div>'+
+      '<div><label>Adresse</label><input type="text" value="'+escAttr(c.a)+'" oninput="setF('+i+',\'a\',this.value)"></div>'+
+    '</div>'+
+    '<div class="grid cols2" style="margin-top:6px">'+
+      '<div><label>Auszuführende Arbeit</label><textarea oninput="setF('+i+',\'az\',this.value)">'+esc(c.az)+'</textarea></div>'+
+      '<div><label>Ausgeführte Arbeit</label><textarea oninput="setF('+i+',\'ag\',this.value)">'+esc(c.ag)+'</textarea></div>'+
+    '</div>'+
+    '<div style="margin-top:8px"><b>Stunden</b><table><thead><tr><th>Monteur</th>'+st.tage.map(function(t){return '<th>'+t+'</th>'}).join('')+'<th>Woche gesamt</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+    '<div style="margin-top:8px"><b>Materialverbrauch</b> <button class="btn secondary" onclick="addM('+i+')">+ Material</button>'+
+      '<table style="margin-top:6px"><thead><tr><th>Material</th><th>Stückzahl</th><th>Bemerkung</th><th></th></tr></thead><tbody>'+mats+'</tbody></table></div>'+
+  '</div>';
+}
+
+// Event delegation: live update of row sums
+document.addEventListener('input', function(ev){
+  var el = ev.target;
+  if (el && el.matches('td.hcell input')){
+    var tr = el.closest('tr');
+    if (tr){
+      var inputs = tr.querySelectorAll('td.hcell input');
+      var sum = 0;
+      inputs.forEach(function(inp){
+        var v = inp.value.replace(/,/g,'.');
+        var n = parseFloat(v);
+        if(!isNaN(n)) sum += n;
+      });
+      var last = tr.querySelector('td.sum-cell');
+      if (last){
+        last.innerHTML = '<b>'+sum.toFixed(2)+'</b>';
+      }
+    }
+  }
+});
+
+// After initial render, compute all visible sums once
+function computeAllVisibleSums(){
+  document.querySelectorAll('#kunden tr').forEach(function(tr){
+    var inputs = tr.querySelectorAll('td.hcell input');
+    var sum = 0;
+    inputs.forEach(function(inp){
+      var v = inp.value.replace(/,/g,'.');
+      var n = parseFloat(v);
+      if(!isNaN(n)) sum += n;
+    });
+    var last = tr.querySelector('td.sum-cell');
+    if (last){
+      last.innerHTML = '<b>'+sum.toFixed(2)+'</b>';
+    }
+  });
+}
+
+function printSel(){ printK(lastSel); }
+function printK(i){
+  var c=st.k[i];
+  var rows='', head=st.tage.map(function(t){return '<th>'+t+'</th>'}).join('');
+  for(var r=0;r<st.team.length;r++){
+    var sum=0, cells='';
+    for(var d=0;d<st.tage.length;d++){ var n=parseFloat(c.h[r][d]||0)||0; sum+=n; cells+='<td>'+n.toFixed(2)+'</td>'; }
+    rows+='<tr><th style="text-align:left)">'+esc(st.team[r])+'</th>'+cells+'<td><b>'+sum.toFixed(2)+'</b></td></tr>';
+  }
+  var mats=''; for(var m=0;m<c.m.length;m++){ var it=c.m[m]; mats+='<tr><td>'+esc(it.b||'')+'</td><td>'+esc(it.s||'')+'</td><td>'+esc(it.r||'')+'</td></tr>'; }
+  if(!mats) mats='<tr><td colspan="3" style="text-align:center;color:#666">—</td></tr>';
+  var html='<!doctype html><html><head><meta charset="utf-8"><title>Arbeitsbericht</title>'+
+    '<style>body{font:12px/1.4 system-ui,Segoe UI,Roboto,Arial;padding:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #777;padding:6px;text-align:center}.meta td{border:none;text-align:left;padding:2px 0}.signature{height:60px;border-top:1px solid #777;margin-top:24px}@page{size:A4;margin:15mm}</style></head><body>'+
+    '<h2 style="margin:0 0 8px 0">Arbeitsbericht – Elektro Welsing</h2>'+
+    '<div style="margin-bottom:6px"><b>KW:</b> '+esc(st.kw)+' &nbsp; <b>Zeitraum:</b> '+esc(st.zr)+'</div>'+
+    '<table class="meta"><tr><td><b>Kunde:</b> '+esc(c.n||'')+'</td></tr><tr><td><b>Adresse:</b> '+esc(c.a||'')+'</td></tr></table>'+
+    '<h3>Auszuführende Arbeit</h3><div>'+esc((c.az||'').replace(/\n/g,"<br>"))+'</div>'+
+    '<h3>Ausgeführte Arbeit</h3><div>'+esc((c.ag||'').replace(/\n/g,"<br>"))+'</div>'+
+    '<h3>Stunden</h3><table><thead><tr><th>Monteur</th>'+head+'<th>Woche gesamt</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+    '<h3>Materialverbrauch</h3><table><thead><tr><th>Material</th><th>Stückzahl</th><th>Bemerkung</th></tr></thead><tbody>'+mats+'</tbody></table>'+
+    '<div style="display:flex;gap:40px;margin-top:30px"><div style="flex:1"><div>Ort, Datum: ________________________________</div><div class="signature"></div><div>Unterschrift Kunde</div></div><div style="flex:1"><div>Ort, Datum: ________________________________</div><div class="signature"></div><div>Unterschrift Monteur</div></div></div>'+
+    '<script>onload=function(){print()}</'+'script></body></html>';
+  writePrint(html);
+}
+
+function printWeekly(){
+  var grid = st.team.map(function(){ return st.tage.map(function(){ return 0; }); });
+  for(var k=0;k<st.k.length;k++){ for(var r=0;r<st.team.length;r++){ for(var d=0; d<st.tage.length; d++){ var v=parseFloat(st.k[k].h[r][d]||0)||0; grid[r][d]+=v; } } }
+  var head=st.tage.map(function(t){return '<th>'+t+'</th>'}).join('');
+  var rows='';
+  for(var r=0;r<st.team.length;r++){ var w=0,cells=''; for(var d=0; d<st.tage.length; d++){ w+=grid[r][d]; cells+='<td>'+grid[r][d].toFixed(2)+'</td>'; } rows+='<tr><th style="text-align:left)">'+esc(st.team[r])+'</th>'+cells+'<td><b>'+w.toFixed(2)+'</b></td></tr>'; }
+  var lines=[]; for(var k=0;k<st.k.length;k++){ for(var r=0;r<st.team.length;r++){ for(var d=0;d<st.tage.length;d++){ var h=parseFloat(st.k[k].h[r][d]||0)||0; if(h>0) lines.push({tag:st.tage[d], kunde:st.k[k].n||'', monteur:st.team[r], stunden:h}); } } }
+  var lrows = lines.map(function(x){ return '<tr><td>'+x.tag+'</td><td>'+esc(x.kunde)+'</td><td>'+esc(x.monteur)+'</td><td>'+x.stunden.toFixed(2)+'</td></tr>'; }).join('');
+  if(!lrows) lrows = '<tr><td colspan="4" style="text-align:center;color:#666">—</td></tr>';
+
+  var html='<!doctype html><html><head><meta charset="utf-8"><title>Wochenbericht</title>'+
+    '<style>body{font:12px/1.4 system-ui,Segoe UI,Roboto,Arial;padding:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #777;padding:6px;text-align:center}@page{size:A4;margin:15mm}</style></head><body>'+
+    '<h2 style="margin:0 0 8px 0">Wochenbericht – Elektro Welsing</h2>'+
+    '<div style="margin-bottom:6px"><b>KW:</b> '+esc(st.kw)+' &nbsp; <b>Zeitraum:</b> '+esc(st.zr)+'</div>'+
+    '<h3>Summen je Monteur / Tag</h3><table><thead><tr><th>Monteur</th>'+head+'<th>Woche gesamt</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+    '<h3 style="margin-top:16px">Kompakte Tagesliste</h3><table><thead><tr><th>Tag</th><th>Kunde</th><th>Monteur</th><th>Stunden</th></tr></thead><tbody>'+lrows+'</tbody></table>'+
+    '<script>onload=function(){print()}</'+'script></body></html>';
+  writePrint(html);
+}
+
+function writePrint(html){
+  var fr=document.getElementById('printFrame');
+  var doc = fr.contentWindow || fr.contentDocument;
+  if(doc.document) doc = doc.document;
+  doc.open(); doc.write(html); doc.close();
+}
+function esc(s){ return (s||'').toString().replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function escAttr(s){ return (s||'').toString().replace(/&/g,"&amp;").replace(/"/g,"&quot;"); }
+
+(function init(){
+  load();
+  if(!st.k || st.k.length===0){ st.k=[newK()]; }
+  render();
+  // fill all sums once
+  computeAllVisibleSums();
+})();
+</script>
+</body>
+</html>
