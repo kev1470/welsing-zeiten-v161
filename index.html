@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Welsing Zeiten – v1.6.7 (Regiebericht Rapunzel)</title>
+<title>Welsing Zeiten – v1.6.5 (Kompakt + Monteur-Wochenbericht)</title>
 <meta name="theme-color" content="#E2231A">
 <style>
   :root{--bg:#0b0c10;--card:#15171c;--ink:#fff;--muted:#c7c7c9;--accent:#F28C00;--accent-ink:#1a1300;--primary:#E2231A;--line:#2a2e36;--focus:#FBB040}
@@ -29,15 +29,6 @@
   .footer>*{flex:1 1 48%}
   iframe#printFrame{position:fixed;left:-9999px;top:-9999px;width:0;height:0;border:0}
 
-  /* --- Mobile Kompakt: Tabellen horizontal scrollen + engere Zellen --- */
-  .hscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-  .hscroll table{min-width:680px}
-  @media (max-width:720px){
-    th,td{padding:6px}
-    .btn{padding:10px 12px}
-    .hscroll table{min-width:620px}
-  }
-
   /* --- MOBILE VISIBILITY (TEL) --- */
   .hcell input{
     -webkit-appearance:none; appearance:none;
@@ -56,12 +47,21 @@
     -webkit-text-fill-color:#fff !important;
     box-shadow:0 0 0px 1000px #0f1116 inset !important;
   }
+
+  /* --- Mobile Kompakt: Tabellen horizontal scrollen + engere Zellen --- */
+  .hscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .hscroll table{min-width:680px}
+  @media (max-width:720px){
+    th,td{padding:6px}
+    .btn{padding:10px 12px}
+    .hscroll table{min-width:620px}
+  }
 </style>
 </head>
 <body>
 <header>
   <b>Welsing Zeiten</b>
-  <div class="ver">v1.6.7 Rapunzel</div>
+  <div class="ver">v1.6.5 Kompakt + Monteur</div>
 </header>
 
 <div class="wrap">
@@ -108,14 +108,16 @@
   <select id="sel2"></select>
   <button class="btn secondary" id="btnScroll2">Zu Kunde</button>
   <button class="btn" id="btnPdfArbeitsbericht">PDF (Arbeitsbericht Kunde)</button>
+  <!-- Kunden-Wochenbericht entfernt -->
 </div>
 <iframe id="printFrame"></iframe>
 
 <script>
 (function(){
 var st = {kw:"", zr:"", tage:["Mo","Di","Mi","Do","Fr","Sa"], team:["Kevin","Jacub","Mario","Martin","Tomas"], k:[]};
-var KEY="wz_v167_rapunzel"; var lastSel = 0;
+var KEY="wz_v165_compact_monteur"; var lastSel = 0;
 
+// optional: wipe per URL
 try{ var usp = new URLSearchParams(location.search); if (usp.get('wipe')==='1'){ localStorage.clear(); } }catch(e){}
 
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(st)); }catch(e){} }
@@ -172,6 +174,7 @@ function render(){
   document.getElementById('sun').value = st.tage.indexOf("So")>=0 ? "1":"0";
   document.getElementById('team').value = st.team.join(', ');
 
+  // fill monteur select
   var monOpts = st.team.map(function(n,idx){ return '<option value="'+idx+'">'+escapeHtml(n)+'</option>'; }).join('');
   document.getElementById('selMonteur').innerHTML = monOpts;
 
@@ -246,7 +249,6 @@ function card(i){
   return '<div class="card" id="k'+i+'">'+
     '<div class="row"><span class="pill">Kunde '+String(i+1).padStart(2,"0")+'</span>'+
     '<button class="btn" data-action="printK" data-i="'+i+'" style="margin-left:auto">PDF Arbeitsbericht</button>'+
-    '<button class="btn secondary" data-action="printKFirma" data-i="'+i+'">PDF Regiebericht Rapunzel</button>'+
     '</div>'+
     '<div class="grid cols2" style="margin-top:6px">'+
       '<div><label>Name</label><input type="text" value="'+escapeAttr(c.n)+'" data-action="setF" data-i="'+i+'" data-f="n"></div>'+
@@ -264,7 +266,7 @@ function card(i){
     '<div style="margin-top:8px"><b>Materialverbrauch</b> <button class="btn secondary" data-action="addM" data-i="'+i+'">+ Material</button>'+
       '<div class="hscroll">'+
         '<table style="margin-top:6px"><thead><tr><th>Material</th><th>Stückzahl</th><th>Bemerkung</th><th></th></tr></thead><tbody>'+mats+'</tbody></table>'+
-      </div>'+
+      '</div>'+
     '</div>'+
   '</div>';
 }
@@ -322,7 +324,6 @@ function attachDelegates(){
     if(act==="addM") addM(i);
     else if(act==="delM"){ var m=+b.dataset.m; delM(i,m); }
     else if(act==="printK") printK(i);
-    else if(act==="printKFirma") printKFirma(i);
   });
 }
 
@@ -357,8 +358,8 @@ function printK(i){
     pdfHeader('Arbeitsbericht')+
     '<div style="margin-bottom:6px"><b>KW:</b> '+escapeHtml(st.kw)+' &nbsp; <b>Zeitraum:</b> '+escapeHtml(st.zr)+'</div>'+
     '<table class="meta"><tr><td><b>Kunde:</b> '+escapeHtml(c.n||'')+'</td></tr><tr><td><b>Adresse:</b> '+escapeHtml(c.a||'')+'</td></tr></table>'+
-    '<h3>Auszuführende Arbeit</h3><div>'+escapeHtml((c.az||'')).replace(/\\n/g,"<br>")+'</div>'+
-    '<h3>Ausgeführte Arbeit</h3><div>'+escapeHtml((c.ag||'')).replace(/\\n/g,"<br>")+'</div>'+
+    '<h3>Auszuführende Arbeit</h3><div>'+escapeHtml((c.az||'')).replace(/\n/g,"<br>")+'</div>'+
+    '<h3>Ausgeführte Arbeit</h3><div>'+escapeHtml((c.ag||'')).replace(/\n/g,"<br>")+'</div>'+
     '<h3>Stunden</h3><table><thead><tr><th>Monteur</th>'+head+'<th>Woche gesamt</th></tr></thead><tbody>'+rows+'</tbody></table>'+
     '<h3>Materialverbrauch</h3><table><thead><tr><th>Material</th><th>Stückzahl</th><th>Bemerkung</th></tr></thead><tbody>'+mats+'</tbody></table>'+
     '<div style="display:flex;gap:40px;margin-top:30px"><div style="flex:1"><div>Ort, Datum: ________________________________</div><div class="signature"></div><div>Unterschrift Kunde</div></div><div style="flex:1"><div>Ort, Datum: ________________________________</div><div class="signature"></div><div>Unterschrift Monteur</div></div></div>'+
@@ -366,67 +367,10 @@ function printK(i){
   writePrint(html);
 }
 
-function printKFirma(i){
-  // Per-Kunde Rapunzel-Report (an Excel-Vorlage angelehnt)
-  var c=st.k[i];
-
-  // Bestimme aktive Monteure (nur die mit >0h)
-  var activeIdx=[]; for(var r=0;r<st.team.length;r++){ var sum=0; for(var d=0; d<st.tage.length; d++){ sum += parseFloat(c.h[r] ? (c.h[r][d]||0) : 0)||0; } if(sum>0) activeIdx.push(r); }
-  if(activeIdx.length===0){ activeIdx = []; } // falls keiner Stunden hat → leere Tabelle
-
-  // Bestimme aktive Tage (nur mit Gesamtstunden >0 über aktive Monteure)
-  var activeDays=[]; for(var d=0; d<st.tage.length; d++){ var s=0; for(var ai=0; ai<activeIdx.length; ai++){ var r=activeIdx[ai]; s += parseFloat(c.h[r] ? (c.h[r][d]||0) : 0)||0; } if(s>0) activeDays.push(d); }
-
-  // Head-Row: Datum/Tag, Monteure, Summe, Tätigkeiten
-  var headCells = '<th style="background:#CFE2F3;border:1px solid #999;padding:6px">Tag</th>';
-  for(var ai=0; ai<activeIdx.length; ai++){ headCells += '<th style="background:#CFE2F3;border:1px solid #999;padding:6px">'+escapeHtml(st.team[activeIdx[ai]])+'</th>'; }
-  headCells += '<th style="background:#CFE2F3;border:1px solid #999;padding:6px">Summe</th>';
-  headCells += '<th style="background:#CFE2F3;border:1px solid #999;padding:6px;text-align:left">Tätigkeiten</th>';
-
-  // Body rows: je aktiver Tag
-  var body='';
-  for(var di=0; di<activeDays.length; di++){
-    var d = activeDays[di];
-    var row = '<tr><td style="border:1px solid #999;padding:6px"><b>'+st.tage[d]+'</b></td>';
-    var sum=0;
-    for(var ai=0; ai<activeIdx.length; ai++){
-      var r=activeIdx[ai];
-      var h=parseFloat(c.h[r] ? (c.h[r][d]||0) : 0)||0;
-      sum += h;
-      row += '<td style="border:1px solid #999;padding:6px;text-align:center">'+h.toFixed(2)+'</td>';
-    }
-    var taet = 'Kunde: '+escapeHtml(c.n||'')+' — '+(c.ag?('Ausgeführte Arbeit: '+escapeHtml(c.ag)):'');
-    row += '<td style="border:1px solid #999;padding:6px"><b>'+sum.toFixed(2)+'</b></td>';
-    row += '<td style="border:1px solid #999;padding:6px;text-align:left">'+taet+'</td></tr>';
-    body += row;
-  }
-
-  // Summenzeile: je Monteur über Woche + Wochentotal
-  var sumRow = '<tr><td style="border:1px solid #999;padding:6px;text-align:left"><b>Woche gesamt</b></td>';
-  var weekSum=0;
-  for(var ai=0; ai<activeIdx.length; ai++){
-    var r=activeIdx[ai], s=0;
-    for(var d=0; d<st.tage.length; d++){ s += parseFloat(c.h[r] ? (c.h[r][d]||0) : 0)||0; }
-    sumRow += '<td style="border:1px solid #999;padding:6px"><b>'+s.toFixed(2)+'</b></td>';
-    weekSum += s;
-  }
-  sumRow += '<td style="border:1px solid #999;padding:6px"><b>'+weekSum.toFixed(2)+'</b></td>';
-  sumRow += '<td style="border:1px solid #999;padding:6px"></td></tr>';
-
-  // PDF HTML
-  var html='<!doctype html><html><head><meta charset="utf-8"><title>Regiebericht Rapunzel</title>'+
-    '<style>body{font:12px/1.4 system-ui,Segoe UI,Roboto,Arial;padding:18px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #999;padding:6px;text-align:center}@page{size:A4 landscape;margin:10mm}</style></head><body>'+
-    '<div style="margin-bottom:6px"><b>Regiebericht Rapunzel</b></div>'+
-    '<div style="margin-bottom:6px"><b>KW:</b> '+escapeHtml(st.kw)+' &nbsp; <b>Zeitraum:</b> '+escapeHtml(st.zr)+'</div>'+
-    '<div style="margin-bottom:6px"><b>Kunde:</b> '+escapeHtml(c.n||"")+' — <b>Adresse:</b> '+escapeHtml(c.a||"")+'</div>'+
-    '<table><thead><tr>'+headCells+'</tr></thead><tbody>'+body+sumRow+'</tbody></table>'+
-    '<div style="margin-top:10px;text-align:left"><b>Hinweis:</b> Nur Monteure mit erfassten Stunden und nur Tage mit Einsatz werden gezeigt.</div>'+
-    '<script>onload=function(){print()}</'+'script></body></html>';
-  writePrint(html);
-}
-
 function printMonteurWeekly(r){
+  // r = monteur index
   var name = st.team[r] || ('Monteur '+(r+1));
+  // Summentabelle je Tag
   var head = st.tage.map(function(t){return '<th>'+t+'</th>';}).join('');
   var cells='', wsum=0;
   for(var d=0; d<st.tage.length; d++){
@@ -438,6 +382,8 @@ function printMonteurWeekly(r){
     cells += '<td>'+s.toFixed(2)+'</td>';
   }
   var rowsSum = '<tr><th style="text-align:left)">'+escapeHtml(name)+'</th>'+cells+'<td><b>'+wsum.toFixed(2)+'</b></td></tr>';
+
+  // Kompakte Tagesliste: Tag/Kunde/Stunden
   var lines=[];
   for(var k=0; k<st.k.length; k++){
     var c=st.k[k];
