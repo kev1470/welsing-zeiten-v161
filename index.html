@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Welsing Zeiten – v1.7.0 (Excel 1:1 Rapunzel)</title>
+<title>Welsing Zeiten – v1.7.1 (Excel 1:1 Rapunzel – Hotfix)</title>
 <meta name="theme-color" content="#E2231A">
 <style>
   :root{--bg:#0b0c10;--card:#15171c;--ink:#fff;--muted:#c7c7c9;--accent:#F28C00;--accent-ink:#1a1300;--primary:#E2231A;--line:#2a2e36;--focus:#FBB040}
@@ -17,7 +17,7 @@
   textarea{min-height:90px} table{border-collapse:collapse;width:100%;background:#0f1116;border-radius:10px;overflow:hidden}
   th,td{border:1px solid var(--line);padding:8px;text-align:center} thead th{background:var(--focus);color:#000;font-weight:800}
   .btn{background:var(--accent);color:#1a1300;border:0;border-radius:10px;padding:12px 14px;font-weight:800;cursor:pointer;min-height:44px}
-  .btn.secondary{background:transparent;color:#fff;border:2px solid {--accent}}
+  .btn.secondary{background:transparent;color:#fff;border:2px solid var(--accent)}
   .pill{display:inline-block;background:#0f1116;border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:13px}
   .footer{position:sticky;bottom:0;background:#0f1116;border-top:3px solid var(--primary);padding:8px 12px;display:flex;gap:8px;flex-wrap:wrap;z-index:9}
   .footer>*{flex:1 1 48%} iframe#printFrame{position:fixed;left:-9999px;top:-9999px;width:0;height:0;border:0}
@@ -28,7 +28,7 @@
 <body>
 <header>
   <b>Welsing Zeiten</b>
-  <div class="ver">v1.7.0 – Excel 1:1 Rapunzel</div>
+  <div class="ver">v1.7.1 – Excel 1:1 Rapunzel (Hotfix)</div>
 </header>
 
 <div class="wrap">
@@ -73,7 +73,7 @@
 <script>
 (function(){
 var st = {kw:"", zr:"", tage:["Mo","Di","Mi","Do","Fr","Sa"], team:["Kevin","Jacub","Mario","Martin","Tomas"], k:[]};
-var KEY="wz_v170_excel_rapunzel"; var lastSel = 0; var templateBinary=null;
+var KEY="wz_v171_excel_rapunzel"; var lastSel = 0; var templateBinary=null;
 
 try{ var usp = new URLSearchParams(location.search); if (usp.get('wipe')==='1'){ localStorage.clear(); } }catch(e){}
 
@@ -169,14 +169,16 @@ function renderLists(){
       }
     }
   }
-  var th = st.tage.map(function(t){return '<th>'+t+'</th>').join('');
+  // HOTFIX: fehlende Klammer war der Bug
+  var th = st.tage.map(function(t){return '<th>'+t+'</th>';}).join('');
   var rows='';
   for(var r=0;r<st.team.length;r++){
     var w=0, cells='';
     for(var d=0;d<st.tage.length;d++){ cells+='<td>'+grid[r][d].toFixed(2)+'</td>'; w+=grid[r][d]; }
     rows+='<tr><th style="text-align:left)">'+escapeHtml(st.team[r])+'</th>'+cells+'<td><b>'+w.toFixed(2)+'</b></td></tr>';
   }
-  document.getElementById('overview') && (document.getElementById('overview').innerHTML = '<table><thead><tr><th>Monteur</th>'+th+'<th>Woche gesamt</th></tr></thead><tbody>'+rows+'</tbody></table>');
+  var el = document.getElementById('overview');
+  if(el){ el.innerHTML = '<table><thead><tr><th>Monteur</th>'+th+'<th>Woche gesamt</th></tr></thead><tbody>'+rows+'</tbody></table>'; }
 }
 
 function card(i){
@@ -283,7 +285,7 @@ function computeAllVisibleSums(){
 
 function pdfHeader(title){ return '<div style="margin-bottom:4px;font-weight:700">'+title+'</div>'; }
 
-/*** PDF-Methoden wie bisher (gekürzt) ***/
+/*** PDF-Methoden ***/
 function writePrint(html){
   var fr=document.getElementById('printFrame');
   var doc = fr.contentWindow || fr.contentDocument;
@@ -317,7 +319,7 @@ function printMonteurWeekly(r){
 
 function printRapunzelLeft(i){
   var c=st.k[i]; var days=["Mo","Di","Mi","Do","Fr","Sa"]; var cols=st.team.slice(); // automatische Namen
-  var thead='<tr><th style="background:#CFE2F3;border:1px solid #777;padding:6px">Tag</th>'+cols.map(function(n){return '<th style="background:#CFE2F3;border:1px solid #777;padding:6px">'+escapeHtml(n)+'</th>'}).join('')+'<th style="background:#CFE2F3;border:1px solid #777;padding:6px">Summe</th><th style="background:#CFE2F3;border:1px solid #777;padding:6px;text-align:left">Tätigkeiten</th></tr>';
+  var thead='<tr><th style="background:#CFE2F3;border:1px solid #777;padding:6px">Tag</th>'+cols.map(function(n){return '<th style="background:#CFE2F3;border:1px solid #777;padding:6px">'+escapeHtml(n)+'</th>').join('')+'<th style="background:#CFE2F3;border:1px solid #777;padding:6px">Summe</th><th style="background:#CFE2F3;border:1px solid #777;padding:6px;text-align:left">Tätigkeiten</th></tr>';
   var tbody=''; for(var d=0; d<days.length; d++){ var sum=0, cells=''; for(var r=0;r<cols.length;r++){ var idx=r; var h=parseFloat(c.h[idx] ? (c.h[idx][d]||0) : 0)||0; sum+=h; cells+='<td style="border:1px solid #777;padding:6px">'+h.toFixed(2)+'</td>'; } tbody+='<tr><td style="border:1px solid #777;padding:6px"><b>'+days[d]+'</b></td>'+cells+'<td style="border:1px solid #777;padding:6px"><b>'+sum.toFixed(2)+'</b></td><td style="border:1px solid #777;padding:6px;text-align:left">'+escapeHtml(c.ag||"")+'</td></tr>'; }
   var html='<!doctype html><html><head><meta charset="utf-8"><title>Regiebericht (links)</title><style>body{font:12px/1.35 system-ui,Segoe UI,Roboto,Arial;padding:14px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #777;padding:6px;text-align:center}@page{size:A4 landscape;margin:10mm}</style></head><body>'
   + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:16px;font-weight:700">Regiebericht Welsing</div><div><b>KW:</b> '+escapeHtml(st.kw)+' &nbsp; <b>Zeitraum:</b> '+escapeHtml(st.zr)+'</div></div>'
@@ -349,7 +351,6 @@ function excelRapunzel(i){
       var wsname = wb.SheetNames[0];
       var ws = wb.Sheets[wsname];
 
-      // Helper to find cell by exact text content
       function findCell(text){
         var range = XLSX.utils.decode_range(ws['!ref']);
         for(var R=range.s.r; R<=range.e.r; ++R){
@@ -366,70 +367,49 @@ function excelRapunzel(i){
 
       var c = st.k[i];
 
-      // Kopf: KW, AG, Beschreibung – finde Labels und schreibe rechts daneben
-      var kwLbl = findCell('KW');
-      if(kwLbl){ var kwCell = XLSX.utils.encode_cell({r:kwLbl.r, c:kwLbl.c+1}); write(kwCell, st.kw||''); }
-      var agLbl = findCell('AG');
-      if(agLbl){ var agCell = XLSX.utils.encode_cell({r:agLbl.r, c:agLbl.c+1}); write(agCell, c.n||''); }
-      var beschLbl = findCell('Beschreibung');
-      if(beschLbl){ var beschCell = XLSX.utils.encode_cell({r:beschLbl.r, c:beschLbl.c+1}); write(beschCell, c.az||''); }
+      var kwLbl = findCell('KW'); if(kwLbl){ var kwCell = XLSX.utils.encode_cell({r:kwLbl.r, c:kwLbl.c+1}); write(kwCell, st.kw||''); }
+      var agLbl = findCell('AG'); if(agLbl){ var agCell = XLSX.utils.encode_cell({r:agLbl.r, c:agLbl.c+1}); write(agCell, c.n||''); }
+      var beschLbl = findCell('Beschreibung'); if(beschLbl){ var beschCell = XLSX.utils.encode_cell({r:beschLbl.r, c:beschLbl.c+1}); write(beschCell, c.az||''); }
 
-      // Finde Tageszeilen (Mo..Sa) in erster Spalte – ermittelt Start-Zeile der Tabelle
       var tagRows = {}; var tage = ['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Mo','Di','Mi','Do','Fr','Sa'];
       var range = XLSX.utils.decode_range(ws['!ref']);
       for(var R=range.s.r; R<=range.e.r; ++R){
         var a = XLSX.utils.encode_cell({r:R,c:range.s.c});
         var v = ws[a] && ws[a].v ? String(ws[a].v).trim() : '';
-        if(tage.indexOf(v)>=0){
-          tagRows[v] = R;
-        }
+        if(tage.indexOf(v)>=0){ tagRows[v] = R; }
       }
-      // Map kurze Namen bevorzugt
-      var dayMap = {}; var pref=[['Mo','Montag'],['Di','Dienstag'],['Mi','Mittwoch'],['Do','Donnerstag'],['Fr','Freitag'],['Sa','Samstag']];
-      pref.forEach(function(p){ var r = (tagRows[p[0]]!=null?tagRows[p[0]]:tagRows[p[1]]); if(r!=null) dayMap[p[0]]=r; });
+      var dayMap = {}; [['Mo','Montag'],['Di','Dienstag'],['Mi','Mittwoch'],['Do','Donnerstag'],['Fr','Freitag'],['Sa','Samstag']].forEach(function(p){ var r = (tagRows[p[0]]!=null?tagRows[p[0]]:tagRows[p[1]]); if(r!=null) dayMap[p[0]]=r; });
 
-      // Header-Zeile suchen: Annahme = eine Zeile über "Mo/Di..." (erste gefundene)
       var firstDayRow = null; for(var k in dayMap){ if(firstDayRow==null || dayMap[k]<firstDayRow) firstDayRow = dayMap[k]; }
       if(firstDayRow==null){ alert('Konnte die Tageszeilen in der Excel nicht finden.'); return; }
       var headerRow = firstDayRow-1;
 
-      // Spaltenbereich ermitteln: ab zweiter Spalte bis vor "Summe" (falls vorhanden)
-      var Cstart = 1; // Spalte B (0-basiert)
-      var Cend = range.e.c;
-      // Summe-Spalte lokalisieren
+      var Cstart = 1; var Cend = range.e.c;
       for(var C=Cstart; C<=range.e.c; ++C){
         var addr = XLSX.utils.encode_cell({r:headerRow, c:C});
         var v = ws[addr] && ws[addr].v ? String(ws[addr].v).toLowerCase() : '';
         if(v.includes('summe')){ Cend = C-1; break; }
       }
 
-      // Auto-Namen in Header schreiben (Team, gekürzt auf Spaltenanzahl)
       var names = st.team.slice(0, Math.max(0, Cend-Cstart+1));
       for(var idx=0; idx<names.length; idx++){
         var haddr = XLSX.utils.encode_cell({r:headerRow, c:Cstart+idx});
         write(haddr, names[idx]);
       }
 
-      // Stunden je Tag/Name in Tabelle schreiben
-      function hours(nameIdx, dayIdx){
-        var v = parseFloat(c.h[nameIdx] ? (c.h[nameIdx][dayIdx]||0) : 0) || 0;
-        return v;
-      }
+      function hours(nameIdx, dayIdx){ var v = parseFloat(c.h[nameIdx] ? (c.h[nameIdx][dayIdx]||0) : 0) || 0; return v; }
       var dayOrder=['Mo','Di','Mi','Do','Fr','Sa'];
       for(var d=0; d<dayOrder.length; d++){
-        var Rrow = dayMap[dayOrder[d]];
-        if(Rrow==null) continue;
+        var Rrow = dayMap[dayOrder[d]]; if(Rrow==null) continue;
         for(var n=0; n<names.length; n++){
           var addr = XLSX.utils.encode_cell({r:Rrow, c:Cstart+n});
           var v = hours(n, d);
           ws[addr] = {t:'n', v:v};
         }
-        // Tätigkeitsspalte suchen (rechts hinter Summe). Wir schreiben die ausgeführte Arbeit in die erste freie Zelle rechts.
         var actAddr = XLSX.utils.encode_cell({r:Rrow, c:Cend+2});
         write(actAddr, c.ag||'');
       }
 
-      // Datei speichern
       var outwb = XLSX.write(wb, {bookType:'xlsx', type:'array'});
       var blob = new Blob([outwb], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
       var url = URL.createObjectURL(blob);
@@ -444,6 +424,20 @@ function excelRapunzel(i){
       alert('Excel-Export fehlgeschlagen: ' + err.message);
     }
   });
+}
+
+function printWeekly(){
+  var grid = st.team.map(function(){ return st.tage.map(function(){ return 0; }); });
+  for(var k=0;k<st.k.length;k++){ for(var r=0;r<st.team.length;r++){ for(var d=0; d<st.tage.length; d++){ var v=parseFloat(st.k[k].h[r][d]||0)||0; grid[r][d]+=v; } } }
+  var head=st.tage.map(function(t){return '<th>'+t+'</th>';}).join('');
+  var rows='';
+  for(var r=0;r<st.team.length;r++){ var w=0,cells=''; for(var d=0; d<st.tage.length; d++){ w+=grid[r][d]; cells+='<td>'+grid[r][d].toFixed(2)+'</td>'; } rows+='<tr><th style="text-align:left)">'+escapeHtml(st.team[r])+'</th>'+cells+'<td><b>'+w.toFixed(2)+'</b></td></tr>'; }
+  var html='<!doctype html><html><head><meta charset="utf-8"><title>Wochenbericht</title><style>body{font:12px/1.4 system-ui,Segoe UI,Roboto,Arial;padding:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #777;padding:6px;text-align:center}@page{size:A4;margin:15mm}</style></head><body>'
+    + pdfHeader('Wochenbericht (alle Kunden)')
+    + '<div style="margin-bottom:6px"><b>KW:</b> '+escapeHtml(st.kw)+' &nbsp; <b>Zeitraum:</b> '+escapeHtml(st.zr)+'</div>'
+    + '<h3>Summen je Monteur / Tag</h3><table><thead><tr><th>Monteur</th>'+head+'<th>Woche gesamt</th></tr></thead><tbody>'+rows+'</tbody></table>'
+    + '<script>onload=function(){print()}</'+'script></body></html>';
+  writePrint(html);
 }
 
 // init
