@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Welsing Zeiten – v1.6.3 MOBILEFIX+</title>
+<title>Welsing Zeiten – v1.6.2 SAFE RECOVERY</title>
 <meta name="theme-color" content="#E2231A">
 <style>
   :root{--bg:#0b0c10;--card:#15171c;--ink:#fff;--muted:#c7c7c9;--accent:#F28C00;--accent-ink:#1a1300;--primary:#E2231A;--line:#2a2e36;--focus:#FBB040}
@@ -28,33 +28,16 @@
   .footer{position:sticky;bottom:0;background:#0f1116;border-top:3px solid var(--primary);padding:8px 12px;display:flex;gap:8px;flex-wrap:wrap;z-index:9}
   .footer>*{flex:1 1 48%}
   iframe#printFrame{position:fixed;left:-9999px;top:-9999px;width:0;height:0;border:0}
-  .hcell input{ text-align:center; font-size:18px; font-weight:600; color:#fff !important; -webkit-text-fill-color:#fff !important; background:#0f1116 !important; opacity: 1 !important; }
+  .hcell input{ text-align:center; font-size:18px; font-weight:600; color:#fff !important; -webkit-text-fill-color:#fff !important; background:#0f1116 !important; opacity:1 !important; }
   input:-webkit-autofill,
   input:-webkit-autofill:hover,
   input:-webkit-autofill:focus{ -webkit-text-fill-color:#fff !important; box-shadow:0 0 0px 1000px #0f1116 inset !important; }
-/* --- MOBILE VISIBILITY HOTFIX --- */
-.hcell input{
-  color:#fff !important;
-  -webkit-text-fill-color:#fff !important;
-  background:#0f1116 !important;
-  text-shadow:0 0 0 #fff;          /* zwingt Repaint */
-  opacity:1 !important;
-  transform:translateZ(0);          /* eigene Compositor-Layer */
-  will-change:transform;
-  caret-color:#FBB040;              /* sichtbarer Cursor */
-}
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus{
-  -webkit-text-fill-color:#fff !important;
-  box-shadow:0 0 0px 1000px #0f1116 inset !important;
-}
 </style>
 </head>
 <body>
 <header>
   <b>Welsing Zeiten</b>
-  <div class="ver">v1.6.3 MOBILEFIX+</div>
+  <div class="ver">v1.6.2 SAFE RECOVERY</div>
 </header>
 
 <div class="wrap">
@@ -72,6 +55,7 @@ input:-webkit-autofill:focus{
     <div class="row" style="margin-top:6px">
       <button class="btn secondary" id="btnApplyTeam">Team übernehmen</button>
       <button class="btn" id="btnWeeklyAll">Wochenbericht (alle) PDF</button>
+      <button class="btn secondary" id="btnWipe">Daten zurücksetzen</button>
     </div>
   </div>
 
@@ -104,10 +88,35 @@ input:-webkit-autofill:focus{
 
 <script>
 (function(){
+// --- URL wipe support ---
+try{
+  var usp = new URLSearchParams(location.search);
+  if (usp.get('wipe')==='1'){ localStorage.clear(); }
+}catch(e){}
+
+// --- SAFE state ---
 var st = {kw:"", zr:"", tage:["Mo","Di","Mi","Do","Fr","Sa"], team:["Kevin","Jacub","Mario","Martin","Tomas"], k:[]};
-var KEY="wz_v163"; var lastSel = 0;
+var KEY="wz_v162_safe"; var lastSel = 0;
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(st)); }catch(e){} }
-function load(){ try{ var raw=localStorage.getItem(KEY); if(raw) st=JSON.parse(raw); }catch(e){} }
+function load(){
+  try{
+    var raw=localStorage.getItem(KEY);
+    if(raw){
+      try{
+        var obj = JSON.parse(raw);
+        // guard against broken shapes
+        if (!obj || typeof obj!=='object') throw 0;
+        if (!Array.isArray(obj.tage) || obj.tage.length<6) obj.tage=["Mo","Di","Mi","Do","Fr","Sa"];
+        if (!Array.isArray(obj.team) || obj.team.length===0) obj.team=["Kevin","Jacub","Mario","Martin","Tomas"];
+        if (!Array.isArray(obj.k)) obj.k=[];
+        st = Object.assign(st, obj);
+      }catch(_){
+        // broken storage -> wipe this key
+        localStorage.removeItem(KEY);
+      }
+    }
+  }catch(e){}
+}
 
 function newK(){ return {n:"", a:"", az:"", ag:"", h: st.team.map(function(){return st.tage.map(function(){return ""})}), m:[{b:"",s:"",r:""}]}; }
 function addKunde(){ st.k.push(newK()); render(); setSel(st.k.length-1); save(); if(window._afterRenderPatch) _afterRenderPatch(); }
@@ -134,7 +143,7 @@ function sanitizeDec(s){
   s = (s||"").toString();
   s = s.replace(/,/g,".");      // Komma -> Punkt
   s = s.replace(/[^0-9.]/g,""); // nur Ziffern und Punkt
-  var p = s.indexOf('.'); if(p>=0){ s = s.slice(0,p+1) + s.slice(p+1).replace(/\\./g,""); } // nur 1 Punkt
+  var p = s.indexOf('.'); if(p>=0){ s = s.slice(0,p+1) + s.slice(p+1).replace(/\./g,""); } // nur 1 Punkt
   return s;
 }
 
@@ -152,24 +161,34 @@ function delM(i,m){ st.k[i].m.splice(m,1); save(); render(); if(window._afterRen
 function setM(i,m,f,v){ st.k[i].m[m][f]=v; save(); }
 
 function render(){
-  fixShapes();
-  document.getElementById('kw').value = st.kw;
-  document.getElementById('zr').value = st.zr;
-  document.getElementById('sun').value = st.tage.indexOf("So")>=0 ? "1":"0";
-  document.getElementById('team').value = st.team.join(', ');
+  try{
+    fixShapes();
+    document.getElementById('kw').value = st.kw || "";
+    document.getElementById('zr').value = st.zr || "";
+    document.getElementById('sun').value = st.tage.indexOf("So")>=0 ? "1":"0";
+    document.getElementById('team').value = (st.team||[]).join(', ');
 
-  var opts=''; for(var i=0;i<st.k.length;i++){ opts+='<option value="'+i+'">'+String(i+1).padStart(2,'0')+' — '+(st.k[i].n||'Kunde')+'</option>'; }
-  document.getElementById('sel').innerHTML=opts; document.getElementById('sel2').innerHTML=opts;
+    var opts=''; for(var i=0;i<st.k.length;i++){ opts+='<option value="'+i+'">'+String(i+1).padStart(2,'0')+' — '+(st.k[i].n||'Kunde')+'</option>'; }
+    if(!opts){ st.k=[newK()]; opts='<option value="0">01 — Kunde</option>'; }
+    document.getElementById('sel').innerHTML=opts; document.getElementById('sel2').innerHTML=opts;
 
-  var out='';
-  for(var i=0;i<st.k.length;i++){ out += card(i); }
-  document.getElementById('kunden').innerHTML = out;
+    var out='';
+    for(var i=0;i<st.k.length;i++){ out += card(i); }
+    document.getElementById('kunden').innerHTML = out;
 
-  renderLists();
-  setSel(lastSel);
+    renderLists();
+    setSel(lastSel);
 
-  attachDelegates();
-  setTimeout(computeAllVisibleSums,0);
+    attachDelegates();
+    setTimeout(computeAllVisibleSums,0);
+  }catch(e){
+    console.error("Render error", e);
+    // Fallback: wipe and rebuild once
+    try{ localStorage.removeItem(KEY); }catch(_){}
+    st = {kw:"", zr:"", tage:["Mo","Di","Mi","Do","Fr","Sa"], team:["Kevin","Jacub","Mario","Martin","Tomas"], k:[newK()]};
+    document.getElementById('kunden').innerHTML = card(0);
+    attachDelegates();
+  }
 }
 
 function renderRowSum(i,r){
@@ -253,6 +272,7 @@ function attachDelegates(){
   document.getElementById('sun').onchange = function(){ toggleSun(this.value); };
   document.getElementById('btnApplyTeam').onclick = applyTeam;
   document.getElementById('btnWeeklyAll').onclick = printWeekly;
+  document.getElementById('btnWipe').onclick = function(){ try{ localStorage.clear(); }catch(e){} location.href='?wipe=1&cb='+(Date.now()); };
 
   // customer toolbar
   document.getElementById('btnAddK').onclick = addKunde;
@@ -272,14 +292,7 @@ function attachDelegates(){
     var t=e.target;
     if(t.matches('td.hcell input')){
       var i=+t.dataset.i, r=+t.dataset.r, d=+t.dataset.d;
-      // sanitize on next frame to avoid IME flicker
-      requestAnimationFrame(function(){
-        setH(i,r,d,t.value);
-        // enforce visible text inline (android quirk)
-        t.style.color = '#fff';
-        t.style.webkitTextFillColor = '#fff';
-        t.style.backgroundColor = '#0f1116';
-      });
+      requestAnimationFrame(function(){ setH(i,r,d,t.value); });
       return;
     }
     if(t.matches('[data-action="setF"]')){
@@ -336,8 +349,8 @@ function printK(i){
     pdfHeader('Arbeitsbericht')+
     '<div style="margin-bottom:6px"><b>KW:</b> '+esc(st.kw)+' &nbsp; <b>Zeitraum:</b> '+esc(st.zr)+'</div>'+
     '<table class="meta"><tr><td><b>Kunde:</b> '+esc(c.n||'')+'</td></tr><tr><td><b>Adresse:</b> '+esc(c.a||'')+'</td></tr></table>'+
-    '<h3>Auszuführende Arbeit</h3><div>'+esc((c.az||'').replace(/\\n/g,"<br>"))+'</div>'+
-    '<h3>Ausgeführte Arbeit</h3><div>'+esc((c.ag||'').replace(/\\n/g,"<br>"))+'</div>'+
+    '<h3>Auszuführende Arbeit</h3><div>'+esc((c.az||'').replace(/\n/g,"<br>"))+'</div>'+
+    '<h3>Ausgeführte Arbeit</h3><div>'+esc((c.ag||'').replace(/\n/g,"<br>"))+'</div>'+
     '<h3>Stunden</h3><table><thead><tr><th>Monteur</th>'+head+'<th>Woche gesamt</th></tr></thead><tbody>'+rows+'</tbody></table>'+
     '<h3>Materialverbrauch</h3><table><thead><tr><th>Material</th><th>Stückzahl</th><th>Bemerkung</th></tr></thead><tbody>'+mats+'</tbody></table>'+
     '<div style="display:flex;gap:40px;margin-top:30px"><div style="flex:1"><div>Ort, Datum: ________________________________</div><div class="signature"></div><div>Unterschrift Kunde</div></div><div style="flex:1"><div>Ort, Datum: ________________________________</div><div class="signature"></div><div>Unterschrift Monteur</div></div></div>'+
@@ -396,7 +409,7 @@ function writePrint(html){
 function esc(s){ return (s||'').toString().replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 function escAttr(s){ return (s||'').toString().replace(/&/g,"&amp;").replace(/"/g,"&quot;"); }
 
-// --- MOBILE VISIBILITY FIXES ---
+// --- MobileFix (visibility + decimals) ---
 function _patchInputsForMobile() {
   document.querySelectorAll('td.hcell input').forEach(function(inp){
     if (inp.dataset && inp.dataset.patched) return;
@@ -406,7 +419,6 @@ function _patchInputsForMobile() {
       inp.autocapitalize = 'off';
       inp.autocomplete = 'off';
       inp.spellcheck = false;
-      // enforce visible text inline (android quirk)
       inp.style.color = '#fff';
       inp.style.webkitTextFillColor = '#fff';
       inp.style.backgroundColor = '#0f1116';
@@ -417,18 +429,15 @@ function _patchInputsForMobile() {
 function _sanitizeDecimal(v) {
   v = String(v || '').replace(/,/g, '.').replace(/[^0-9.]/g, '');
   var p = v.indexOf('.');
-  if (p >= 0) v = v.slice(0, p + 1) + v.slice(p + 1).replace(/\./g, '');
+  if (p >= 0) v = v.slice(0, p+1) + v.slice(p+1).replace(/\./g, '');
   return v;
 }
 document.addEventListener('input', function(ev){
   var el = ev.target;
   if (!el || !el.matches || !el.matches('td.hcell input')) return;
-  // sanitize on next frame to play nice with Android IME
   requestAnimationFrame(function(){
     var san = _sanitizeDecimal(el.value);
     if (san !== el.value) el.value = san;
-    // inline enforce color (some devices ignore CSS temporarily while typing)
-    el.style.color = '#fff'; el.style.webkitTextFillColor = '#fff'; el.style.backgroundColor = '#0f1116';
     var tr = el.closest && el.closest('tr');
     if (tr) {
       var sum = 0;
@@ -458,48 +467,9 @@ window._afterRenderPatch = function(){ _patchInputsForMobile(); };
 
 // init
 load();
-if(!st.k || st.k.length===0){ st.k=[newK()]; }
+if(!st.k || !Array.isArray(st.k) || st.k.length===0){ st.k=[newK()]; }
 render();
 if(window._afterRenderPatch) _afterRenderPatch();
-})();<script>
-// --- MOBILE VISIBILITY HOTFIX (JS) ---
-(function(){
-  function sanitizeDecimal(v){
-    v = String(v||'').replace(/,/g,'.').replace(/[^0-9.]/g,'');
-    const p = v.indexOf('.');
-    return p>=0 ? v.slice(0,p+1)+v.slice(p+1).replace(/\./g,'') : v;
-  }
-  // während der Eingabe sanft korrigieren & Repaint erzwingen
-  document.addEventListener('input', function(ev){
-    const el = ev.target;
-    if (!el || !el.matches || !el.matches('td.hcell input')) return;
-    // auf nächsten Frame legen (IME mag das lieber)
-    requestAnimationFrame(function(){
-      const val = sanitizeDecimal(el.value);
-      if (val !== el.value) el.value = val;
-      // Repaint-Trigger für Geräte, die Text kurz "unsichtbar" rendern
-      el.style.color = '#fff';
-      el.style.webkitTextFillColor = '#fff';
-      el.style.backgroundColor = '#0f1116';
-      // optional: Wochenübersicht neu
-      if (typeof renderLists==='function') renderLists();
-    });
-  });
-  // beim Fokus gleich sichere Styles setzen
-  document.addEventListener('focusin', function(ev){
-    const el = ev.target;
-    if (!el || !el.matches || !el.matches('td.hcell input')) return;
-    el.type = 'text';
-    el.setAttribute('inputmode','decimal');
-    el.autocapitalize = 'off';
-    el.autocomplete = 'off';
-    el.spellcheck = false;
-    el.style.color = '#fff';
-    el.style.webkitTextFillColor = '#fff';
-    el.style.backgroundColor = '#0f1116';
-  });
-})();
-</script>
-</script>
+})();</script>
 </body>
 </html>
