@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Welsing Zeiten – v1.6.3b STABLE (TEL Fix)</title>
+<title>Welsing Zeiten – v1.6.5 (Kompakt + Monteur-Wochenbericht)</title>
 <meta name="theme-color" content="#E2231A">
 <style>
   :root{--bg:#0b0c10;--card:#15171c;--ink:#fff;--muted:#c7c7c9;--accent:#F28C00;--accent-ink:#1a1300;--primary:#E2231A;--line:#2a2e36;--focus:#FBB040}
@@ -47,12 +47,21 @@
     -webkit-text-fill-color:#fff !important;
     box-shadow:0 0 0px 1000px #0f1116 inset !important;
   }
+
+  /* --- Mobile Kompakt: Tabellen horizontal scrollen + engere Zellen --- */
+  .hscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .hscroll table{min-width:680px}
+  @media (max-width:720px){
+    th,td{padding:6px}
+    .btn{padding:10px 12px}
+    .hscroll table{min-width:620px}
+  }
 </style>
 </head>
 <body>
 <header>
   <b>Welsing Zeiten</b>
-  <div class="ver">v1.6.3b STABLE</div>
+  <div class="ver">v1.6.5 Kompakt + Monteur</div>
 </header>
 
 <div class="wrap">
@@ -70,6 +79,8 @@
     <div class="row" style="margin-top:6px">
       <button class="btn secondary" id="btnApplyTeam">Team übernehmen</button>
       <button class="btn" id="btnWeeklyAll">Wochenbericht (alle) PDF</button>
+      <select id="selMonteur" title="Monteur wählen"></select>
+      <button class="btn secondary" id="btnWeeklyMonteur">PDF (Wochenbericht Monteur)</button>
       <button class="btn secondary" id="btnWipe">Daten zurücksetzen</button>
     </div>
   </div>
@@ -97,14 +108,14 @@
   <select id="sel2"></select>
   <button class="btn secondary" id="btnScroll2">Zu Kunde</button>
   <button class="btn" id="btnPdfArbeitsbericht">PDF (Arbeitsbericht Kunde)</button>
-  <button class="btn" id="btnPdfWochenKunde">PDF (Wochenbericht Kunde)</button>
+  <!-- Kunden-Wochenbericht entfernt -->
 </div>
 <iframe id="printFrame"></iframe>
 
 <script>
 (function(){
 var st = {kw:"", zr:"", tage:["Mo","Di","Mi","Do","Fr","Sa"], team:["Kevin","Jacub","Mario","Martin","Tomas"], k:[]};
-var KEY="wz_v163b_stable"; var lastSel = 0;
+var KEY="wz_v165_compact_monteur"; var lastSel = 0;
 
 // optional: wipe per URL
 try{ var usp = new URLSearchParams(location.search); if (usp.get('wipe')==='1'){ localStorage.clear(); } }catch(e){}
@@ -120,7 +131,10 @@ function setSel(v){ lastSel=parseInt(v||"0",10)||0; document.getElementById('sel
 function scrollSel(){ var el=document.getElementById('k'+lastSel); if(el){ el.scrollIntoView({behavior:'smooth'}); } }
 
 function toggleSun(v){ if(v==="1"){ if(st.tage.indexOf("So")<0) st.tage.push("So"); } else { st.tage=st.tage.filter(function(t){return t!=="So"}); } fixShapes(); render(); save(); forceTelInputs(); }
-function applyTeam(){ var arr=document.getElementById('team').value.split(',').map(function(s){return s.trim()}).filter(Boolean); if(arr.length){ st.team=arr; fixShapes(); render(); save(); forceTelInputs(); } }
+function applyTeam(){
+  var arr=document.getElementById('team').value.split(',').map(function(s){return s.trim()}).filter(Boolean);
+  if(arr.length){ st.team=arr; fixShapes(); render(); save(); forceTelInputs(); }
+}
 
 function fixShapes(){
   for(var i=0;i<st.k.length;i++){
@@ -159,6 +173,10 @@ function render(){
   document.getElementById('zr').value = st.zr;
   document.getElementById('sun').value = st.tage.indexOf("So")>=0 ? "1":"0";
   document.getElementById('team').value = st.team.join(', ');
+
+  // fill monteur select
+  var monOpts = st.team.map(function(n,idx){ return '<option value="'+idx+'">'+escapeHtml(n)+'</option>'; }).join('');
+  document.getElementById('selMonteur').innerHTML = monOpts;
 
   var opts=''; for(var i=0;i<st.k.length;i++){ opts+='<option value="'+i+'">'+String(i+1).padStart(2,'0')+' — '+(st.k[i].n||'Kunde')+'</option>'; }
   if(!opts){ st.k=[newK()]; opts='<option value="0">01 — Kunde</option>'; }
@@ -205,7 +223,7 @@ function renderLists(){
     for(var d=0;d<st.tage.length;d++){ cells+='<td>'+grid[r][d].toFixed(2)+'</td>'; w+=grid[r][d]; }
     rows+='<tr><th style="text-align:left)">'+escapeHtml(st.team[r])+'</th>'+cells+'<td><b>'+w.toFixed(2)+'</b></td></tr>';
   }
-  document.getElementById('overview').innerHTML = '<table><thead><tr><th>Monteur</th>'+th+'<th>Woche gesamt</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  document.getElementById('overview').innerHTML = '<div class="hscroll"><table><thead><tr><th>Monteur</th>'+th+'<th>Woche gesamt</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
 
 function card(i){
@@ -231,7 +249,7 @@ function card(i){
   return '<div class="card" id="k'+i+'">'+
     '<div class="row"><span class="pill">Kunde '+String(i+1).padStart(2,"0")+'</span>'+
     '<button class="btn" data-action="printK" data-i="'+i+'" style="margin-left:auto">PDF Arbeitsbericht</button>'+
-    '<button class="btn" data-action="printKWeekly" data-i="'+i+'">PDF Wochenbericht (Kunde)</button></div>'+
+    '</div>'+
     '<div class="grid cols2" style="margin-top:6px">'+
       '<div><label>Name</label><input type="text" value="'+escapeAttr(c.n)+'" data-action="setF" data-i="'+i+'" data-f="n"></div>'+
       '<div><label>Adresse</label><input type="text" value="'+escapeAttr(c.a)+'" data-action="setF" data-i="'+i+'" data-f="a"></div>'+
@@ -240,9 +258,16 @@ function card(i){
       '<div><label>Auszuführende Arbeit</label><textarea data-action="setF" data-i="'+i+'" data-f="az">'+escapeHtml(c.az)+'</textarea></div>'+
       '<div><label>Ausgeführte Arbeit</label><textarea data-action="setF" data-i="'+i+'" data-f="ag">'+escapeHtml(c.ag)+'</textarea></div>'+
     '</div>'+
-    '<div style="margin-top:8px"><b>Stunden</b><table><thead><tr><th>Monteur</th>'+st.tage.map(function(t){return '<th>'+t+'</th>'}).join('')+'<th>Woche gesamt</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+    '<div style="margin-top:8px"><b>Stunden</b>'+
+      '<div class="hscroll">'+
+        '<table><thead><tr><th>Monteur</th>'+st.tage.map(function(t){return '<th>'+t+'</th>'}).join('')+'<th>Woche gesamt</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+      '</div>'+
+    '</div>'+
     '<div style="margin-top:8px"><b>Materialverbrauch</b> <button class="btn secondary" data-action="addM" data-i="'+i+'">+ Material</button>'+
-      '<table style="margin-top:6px"><thead><tr><th>Material</th><th>Stückzahl</th><th>Bemerkung</th><th></th></tr></thead><tbody>'+mats+'</tbody></table></div>'+
+      '<div class="hscroll">'+
+        '<table style="margin-top:6px"><thead><tr><th>Material</th><th>Stückzahl</th><th>Bemerkung</th><th></th></tr></thead><tbody>'+mats+'</tbody></table>'+
+      '</div>'+
+    '</div>'+
   '</div>';
 }
 
@@ -252,6 +277,10 @@ function attachDelegates(){
   document.getElementById('sun').onchange = function(){ toggleSun(this.value); };
   document.getElementById('btnApplyTeam').onclick = applyTeam;
   document.getElementById('btnWeeklyAll').onclick = printWeekly;
+  document.getElementById('btnWeeklyMonteur').onclick = function(){
+    var sel = document.getElementById('selMonteur'); var r = parseInt(sel.value||"0",10)||0;
+    printMonteurWeekly(r);
+  };
   document.getElementById('btnWipe').onclick = function(){ try{ localStorage.clear(); }catch(e){} location.href='?wipe=1&cb='+(Date.now()); };
 
   document.getElementById('btnAddK').onclick = addKunde;
@@ -262,7 +291,6 @@ function attachDelegates(){
   document.getElementById('sel2').onchange = function(){ setSel(this.value); };
   document.getElementById('btnScroll2').onclick = scrollSel;
   document.getElementById('btnPdfArbeitsbericht').onclick = function(){ printK(lastSel); };
-  document.getElementById('btnPdfWochenKunde').onclick = function(){ printKWeekly(lastSel); };
 
   var kc = document.getElementById('kunden');
   kc.addEventListener('input', function(e){
@@ -296,7 +324,6 @@ function attachDelegates(){
     if(act==="addM") addM(i);
     else if(act==="delM"){ var m=+b.dataset.m; delM(i,m); }
     else if(act==="printK") printK(i);
-    else if(act==="printKWeekly") printKWeekly(i);
   });
 }
 
@@ -340,25 +367,40 @@ function printK(i){
   writePrint(html);
 }
 
-function printKWeekly(i){
-  var c=st.k[i];
-  var head=st.tage.map(function(t){return '<th>'+t+'</th>'}).join('');
-  var rows='';
-  for(var r=0;r<st.team.length;r++){
-    var w=0,cells='';
-    for(var d=0; d<st.tage.length; d++){ var n=parseFloat(c.h[r][d]||0)||0; w+=n; cells+='<td>'+n.toFixed(2)+'</td>'; }
-    rows+='<tr><th style="text-align:left)">'+escapeHtml(st.team[r])+'</th>'+cells+'<td><b>'+w.toFixed(2)+'</b></td></tr>';
+function printMonteurWeekly(r){
+  // r = monteur index
+  var name = st.team[r] || ('Monteur '+(r+1));
+  // Summentabelle je Tag
+  var head = st.tage.map(function(t){return '<th>'+t+'</th>';}).join('');
+  var cells='', wsum=0;
+  for(var d=0; d<st.tage.length; d++){
+    var s=0;
+    for(var k=0; k<st.k.length; k++){
+      s += parseFloat(st.k[k].h[r] ? (st.k[k].h[r][d]||0) : 0) || 0;
+    }
+    wsum += s;
+    cells += '<td>'+s.toFixed(2)+'</td>';
   }
-  var lines=[]; for(var r=0;r<st.team.length;r++){ for(var d=0;d<st.tage.length;d++){ var h=parseFloat(c.h[r][d]||0)||0; if(h>0) lines.push({tag:st.tage[d], kunde:c.n||'', monteur:st.team[r], stunden:h}); } }
-  var lrows = lines.map(function(x){ return '<tr><td>'+x.tag+'</td><td>'+escapeHtml(x.kunde)+'</td><td>'+escapeHtml(x.monteur)+'</td><td>'+x.stunden.toFixed(2)+'</td></tr>'; }).join('');
-  if(!lrows) lrows = '<tr><td colspan="4" style="text-align:center;color:#666">—</td></tr>';
-  var html='<!doctype html><html><head><meta charset="utf-8"><title>Wochenbericht (Kunde)</title>'+
+  var rowsSum = '<tr><th style="text-align:left)">'+escapeHtml(name)+'</th>'+cells+'<td><b>'+wsum.toFixed(2)+'</b></td></tr>';
+
+  // Kompakte Tagesliste: Tag/Kunde/Stunden
+  var lines=[];
+  for(var k=0; k<st.k.length; k++){
+    var c=st.k[k];
+    for(var d=0; d<st.tage.length; d++){
+      var h = parseFloat(c.h[r] ? (c.h[r][d]||0) : 0) || 0;
+      if(h>0) lines.push({tag:st.tage[d], kunde:c.n||'', stunden:h});
+    }
+  }
+  var lrows = lines.map(function(x){return '<tr><td>'+x.tag+'</td><td>'+escapeHtml(x.kunde)+'</td><td>'+x.stunden.toFixed(2)+'</td></tr>';}).join('');
+  if(!lrows) lrows = '<tr><td colspan="3" style="text-align:center;color:#666">—</td></tr>';
+
+  var html='<!doctype html><html><head><meta charset="utf-8"><title>Wochenbericht (Monteur)</title>'+
     '<style>body{font:12px/1.4 system-ui,Segoe UI,Roboto,Arial;padding:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #777;padding:6px;text-align:center}@page{size:A4;margin:15mm}</style></head><body>'+
-    pdfHeader('Wochenbericht (Kunde)')+
+    pdfHeader('Wochenbericht (Monteur) — '+escapeHtml(name))+
     '<div style="margin-bottom:6px"><b>KW:</b> '+escapeHtml(st.kw)+' &nbsp; <b>Zeitraum:</b> '+escapeHtml(st.zr)+'</div>'+
-    '<div style="margin-bottom:6px"><b>Kunde:</b> '+escapeHtml(c.n||'')+' — <b>Adresse:</b> '+escapeHtml(c.a||'')+'</div>'+
-    '<h3>Summen je Monteur / Tag</h3><table><thead><tr><th>Monteur</th>'+head+'<th>Woche gesamt</th></tr></thead><tbody>'+rows+'</tbody></table>'+
-    '<h3 style="margin-top:16px">Kompakte Tagesliste</h3><table><thead><tr><th>Tag</th><th>Kunde</th><th>Monteur</th><th>Stunden</th></tr></thead><tbody>'+lrows+'</tbody></table>'+
+    '<h3>Summen je Tag</h3><table><thead><tr><th>Monteur</th>'+head+'<th>Woche gesamt</th></tr></thead><tbody>'+rowsSum+'</tbody></table>'+
+    '<h3 style="margin-top:16px">Kompakte Tagesliste</h3><table><thead><tr><th>Tag</th><th>Kunde</th><th>Stunden</th></tr></thead><tbody>'+lrows+'</tbody></table>'+
     '<script>onload=function(){print()}</'+'script></body></html>';
   writePrint(html);
 }
