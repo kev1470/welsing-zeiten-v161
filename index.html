@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Welsing Zeiten – v1.7.1 (Excel 1:1 Rapunzel – Hotfix)</title>
+<title>Welsing Zeiten – v1.7.2 (Excel 1:1 Rapunzel – Fix)</title>
 <meta name="theme-color" content="#E2231A">
 <style>
   :root{--bg:#0b0c10;--card:#15171c;--ink:#fff;--muted:#c7c7c9;--accent:#F28C00;--accent-ink:#1a1300;--primary:#E2231A;--line:#2a2e36;--focus:#FBB040}
@@ -28,7 +28,7 @@
 <body>
 <header>
   <b>Welsing Zeiten</b>
-  <div class="ver">v1.7.1 – Excel 1:1 Rapunzel (Hotfix)</div>
+  <div class="ver">v1.7.2 – Excel 1:1 Rapunzel (Fix)</div>
 </header>
 
 <div class="wrap">
@@ -73,27 +73,27 @@
 <script>
 (function(){
 var st = {kw:"", zr:"", tage:["Mo","Di","Mi","Do","Fr","Sa"], team:["Kevin","Jacub","Mario","Martin","Tomas"], k:[]};
-var KEY="wz_v171_excel_rapunzel"; var lastSel = 0; var templateBinary=null;
+var KEY="wz_v172_excel_rapunzel"; var lastSel = 0; var templateBinary=null;
 
 try{ var usp = new URLSearchParams(location.search); if (usp.get('wipe')==='1'){ localStorage.clear(); } }catch(e){}
 
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(st)); }catch(e){} }
 function load(){ try{ var raw=localStorage.getItem(KEY); if(raw){ var o=JSON.parse(raw)||{}; if(o && typeof o==='object') st=Object.assign(st,o); } }catch(e){} }
 
-function newK(){ return {n:"", a:"", az:"", ag:"", h: st.team.map(function(){return st.tage.map(function(){return ""})}), m:[{b:"",s:"",r:""}]}; }
+function newK(){ return {n:"", a:"", az:"", ag:"", h: st.team.map(function(){return st.tage.map(function(){return ""});}), m:[{b:"",s:"",r:""}]}; }
 function addKunde(){ st.k.push(newK()); render(); setSel(st.k.length-1); save(); }
-function remKunde(){ if(st.k.length<=1){alert("Mindestens 1 Kunde.");return} var i=lastSel; st.k.splice(i,1); render(); if(i>=st.k.length)i=st.k.length-1; setSel(i); save(); }
+function remKunde(){ if(st.k.length<=1){alert("Mindestens 1 Kunde.");return;} var i=lastSel; st.k.splice(i,1); render(); if(i>=st.k.length)i=st.k.length-1; setSel(i); save(); }
 
 function setSel(v){ lastSel=parseInt(v||"0",10)||0; document.getElementById('sel').value=String(lastSel); document.getElementById('sel2').value=String(lastSel); }
 function scrollSel(){ var el=document.getElementById('k'+lastSel); if(el){ el.scrollIntoView({behavior:'smooth'}); } }
 
-function toggleSun(v){ if(v==="1"){ if(st.tage.indexOf("So")<0) st.tage.push("So"); } else { st.tage=st.tage.filter(function(t){return t!=="So"}); } fixShapes(); render(); save(); }
-function applyTeam(){ var arr=document.getElementById('team').value.split(',').map(function(s){return s.trim()}).filter(Boolean); if(arr.length){ st.team=arr; fixShapes(); render(); save(); } }
+function toggleSun(v){ if(v==="1"){ if(st.tage.indexOf("So")<0) st.tage.push("So"); } else { st.tage=st.tage.filter(function(t){return t!=="So";}); } fixShapes(); render(); save(); }
+function applyTeam(){ var arr=document.getElementById('team').value.split(',').map(function(s){return s.trim();}).filter(Boolean); if(arr.length){ st.team=arr; fixShapes(); render(); save(); } }
 
 function fixShapes(){
   for(var i=0;i<st.k.length;i++){
     var c=st.k[i];
-    while(c.h.length<st.team.length) c.h.push(st.tage.map(function(){return ""}));
+    while(c.h.length<st.team.length) c.h.push(st.tage.map(function(){return ""; }));
     while(c.h.length>st.team.length) c.h.pop();
     for(var r=0;r<c.h.length;r++){
       while(c.h[r].length<st.tage.length) c.h[r].push("");
@@ -169,7 +169,6 @@ function renderLists(){
       }
     }
   }
-  // HOTFIX: fehlende Klammer war der Bug
   var th = st.tage.map(function(t){return '<th>'+t+'</th>';}).join('');
   var rows='';
   for(var r=0;r<st.team.length;r++){
@@ -177,6 +176,7 @@ function renderLists(){
     for(var d=0;d<st.tage.length;d++){ cells+='<td>'+grid[r][d].toFixed(2)+'</td>'; w+=grid[r][d]; }
     rows+='<tr><th style="text-align:left)">'+escapeHtml(st.team[r])+'</th>'+cells+'<td><b>'+w.toFixed(2)+'</b></td></tr>';
   }
+  // optional: Übersicht kann fehlen – deshalb guard
   var el = document.getElementById('overview');
   if(el){ el.innerHTML = '<table><thead><tr><th>Monteur</th>'+th+'<th>Woche gesamt</th></tr></thead><tbody>'+rows+'</tbody></table>'; }
 }
@@ -215,7 +215,7 @@ function card(i){
       '<div><label>Auszuführende Arbeit (Beschreibung)</label><textarea data-action="setF" data-i="'+i+'" data-f="az">'+escapeHtml(c.az)+'</textarea></div>'+
       '<div><label>Ausgeführte Arbeit</label><textarea data-action="setF" data-i="'+i+'" data-f="ag">'+escapeHtml(c.ag)+'</textarea></div>'+
     '</div>'+
-    '<div style="margin-top:8px"><b>Stunden</b><table><thead><tr><th>Monteur</th>'+st.tage.map(function(t){return '<th>'+t+'</th>'}).join('')+'<th>Woche gesamt</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+    '<div style="margin-top:8px"><b>Stunden</b><table><thead><tr><th>Monteur</th>'+st.tage.map(function(t){return '<th>'+t+'</th>';}).join('')+'<th>Woche gesamt</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
     '<div style="margin-top:8px"><b>Materialverbrauch</b> <button class="btn secondary" data-action="addM" data-i="'+i+'">+ Material</button>'+
       '<table style="margin-top:6px"><thead><tr><th>Material</th><th>Stückzahl</th><th>Bemerkung</th><th></th></tr></thead><tbody>'+mats+'</tbody></table></div>'+
   '</div>';
@@ -285,7 +285,6 @@ function computeAllVisibleSums(){
 
 function pdfHeader(title){ return '<div style="margin-bottom:4px;font-weight:700">'+title+'</div>'; }
 
-/*** PDF-Methoden ***/
 function writePrint(html){
   var fr=document.getElementById('printFrame');
   var doc = fr.contentWindow || fr.contentDocument;
@@ -296,7 +295,7 @@ function escapeHtml(s){ return (s||'').toString().replace(/&/g,"&amp;").replace(
 function escapeAttr(s){ return (s||'').toString().replace(/&/g,"&amp;").replace(/"/g,"&quot;"); }
 
 function printK(i){
-  var c=st.k[i]; var head=st.tage.map(function(t){return '<th>'+t+'</th>'}).join(''); var rows='';
+  var c=st.k[i]; var head=st.tage.map(function(t){return '<th>'+t+'</th>';}).join(''); var rows='';
   for(var r=0;r<st.team.length;r++){ var sum=0, cells=''; for(var d=0;d<st.tage.length;d++){ var n=parseFloat(c.h[r][d]||0)||0; sum+=n; cells+='<td>'+n.toFixed(2)+'</td>'; } rows+='<tr><th style="text-align:left)">'+escapeHtml(st.team[r])+'</th>'+cells+'<td><b>'+sum.toFixed(2)+'</b></td></tr>'; }
   var html='<!doctype html><html><head><meta charset="utf-8"><title>Arbeitsbericht</title><style>body{font:12px/1.4 system-ui,Segoe UI,Roboto,Arial;padding:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #777;padding:6px;text-align:center}@page{size:A4;margin:15mm}</style></head><body>'
   + pdfHeader('Arbeitsbericht') + '<div style="margin-bottom:6px"><b>KW:</b> '+escapeHtml(st.kw)+' &nbsp; <b>Zeitraum:</b> '+escapeHtml(st.zr)+'</div>'
@@ -319,8 +318,23 @@ function printMonteurWeekly(r){
 
 function printRapunzelLeft(i){
   var c=st.k[i]; var days=["Mo","Di","Mi","Do","Fr","Sa"]; var cols=st.team.slice(); // automatische Namen
-  var thead='<tr><th style="background:#CFE2F3;border:1px solid #777;padding:6px">Tag</th>'+cols.map(function(n){return '<th style="background:#CFE2F3;border:1px solid #777;padding:6px">'+escapeHtml(n)+'</th>').join('')+'<th style="background:#CFE2F3;border:1px solid #777;padding:6px">Summe</th><th style="background:#CFE2F3;border:1px solid #777;padding:6px;text-align:left">Tätigkeiten</th></tr>';
-  var tbody=''; for(var d=0; d<days.length; d++){ var sum=0, cells=''; for(var r=0;r<cols.length;r++){ var idx=r; var h=parseFloat(c.h[idx] ? (c.h[idx][d]||0) : 0)||0; sum+=h; cells+='<td style="border:1px solid #777;padding:6px">'+h.toFixed(2)+'</td>'; } tbody+='<tr><td style="border:1px solid #777;padding:6px"><b>'+days[d]+'</b></td>'+cells+'<td style="border:1px solid #777;padding:6px"><b>'+sum.toFixed(2)+'</b></td><td style="border:1px solid #777;padding:6px;text-align:left">'+escapeHtml(c.ag||"")+'</td></tr>'; }
+  var thead='<tr>'
+    + '<th style="background:#CFE2F3;border:1px solid #777;padding:6px">Tag</th>'
+    + cols.map(function(n){ return '<th style="background:#CFE2F3;border:1px solid #777;padding:6px">'+escapeHtml(n)+'</th>'; }).join('')
+    + '<th style="background:#CFE2F3;border:1px solid #777;padding:6px">Summe</th>'
+    + '<th style="background:#CFE2F3;border:1px solid #777;padding:6px;text-align:left">Tätigkeiten</th>'
+    + '</tr>';
+  var tbody='';
+  for(var d=0; d<days.length; d++){
+    var daySum=0, cells='';
+    for(var r=0;r<cols.length;r++){
+      var idx=r;
+      var h=parseFloat(c.h[idx] ? (c.h[idx][d]||0) : 0)||0;
+      daySum+=h;
+      cells+='<td style="border:1px solid #777;padding:6px">'+h.toFixed(2)+'</td>';
+    }
+    tbody+='<tr><td style="border:1px solid #777;padding:6px"><b>'+days[d]+'</b></td>'+cells+'<td style="border:1px solid #777;padding:6px"><b>'+daySum.toFixed(2)+'</b></td><td style="border:1px solid #777;padding:6px;text-align:left">'+escapeHtml(c.ag||"")+'</td></tr>';
+  }
   var html='<!doctype html><html><head><meta charset="utf-8"><title>Regiebericht (links)</title><style>body{font:12px/1.35 system-ui,Segoe UI,Roboto,Arial;padding:14px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #777;padding:6px;text-align:center}@page{size:A4 landscape;margin:10mm}</style></head><body>'
   + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:16px;font-weight:700">Regiebericht Welsing</div><div><b>KW:</b> '+escapeHtml(st.kw)+' &nbsp; <b>Zeitraum:</b> '+escapeHtml(st.zr)+'</div></div>'
   + '<div style="margin:4px 0"><b>AG:</b> '+escapeHtml(c.n||"")+'</div>'
