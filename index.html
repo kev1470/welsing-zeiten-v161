@@ -32,6 +32,23 @@
   input:-webkit-autofill,
   input:-webkit-autofill:hover,
   input:-webkit-autofill:focus{ -webkit-text-fill-color:#fff !important; box-shadow:0 0 0px 1000px #0f1116 inset !important; }
+/* --- MOBILE VISIBILITY HOTFIX --- */
+.hcell input{
+  color:#fff !important;
+  -webkit-text-fill-color:#fff !important;
+  background:#0f1116 !important;
+  text-shadow:0 0 0 #fff;          /* zwingt Repaint */
+  opacity:1 !important;
+  transform:translateZ(0);          /* eigene Compositor-Layer */
+  will-change:transform;
+  caret-color:#FBB040;              /* sichtbarer Cursor */
+}
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus{
+  -webkit-text-fill-color:#fff !important;
+  box-shadow:0 0 0px 1000px #0f1116 inset !important;
+}
 </style>
 </head>
 <body>
@@ -444,6 +461,45 @@ load();
 if(!st.k || st.k.length===0){ st.k=[newK()]; }
 render();
 if(window._afterRenderPatch) _afterRenderPatch();
-})();</script>
+})();<script>
+// --- MOBILE VISIBILITY HOTFIX (JS) ---
+(function(){
+  function sanitizeDecimal(v){
+    v = String(v||'').replace(/,/g,'.').replace(/[^0-9.]/g,'');
+    const p = v.indexOf('.');
+    return p>=0 ? v.slice(0,p+1)+v.slice(p+1).replace(/\./g,'') : v;
+  }
+  // während der Eingabe sanft korrigieren & Repaint erzwingen
+  document.addEventListener('input', function(ev){
+    const el = ev.target;
+    if (!el || !el.matches || !el.matches('td.hcell input')) return;
+    // auf nächsten Frame legen (IME mag das lieber)
+    requestAnimationFrame(function(){
+      const val = sanitizeDecimal(el.value);
+      if (val !== el.value) el.value = val;
+      // Repaint-Trigger für Geräte, die Text kurz "unsichtbar" rendern
+      el.style.color = '#fff';
+      el.style.webkitTextFillColor = '#fff';
+      el.style.backgroundColor = '#0f1116';
+      // optional: Wochenübersicht neu
+      if (typeof renderLists==='function') renderLists();
+    });
+  });
+  // beim Fokus gleich sichere Styles setzen
+  document.addEventListener('focusin', function(ev){
+    const el = ev.target;
+    if (!el || !el.matches || !el.matches('td.hcell input')) return;
+    el.type = 'text';
+    el.setAttribute('inputmode','decimal');
+    el.autocapitalize = 'off';
+    el.autocomplete = 'off';
+    el.spellcheck = false;
+    el.style.color = '#fff';
+    el.style.webkitTextFillColor = '#fff';
+    el.style.backgroundColor = '#0f1116';
+  });
+})();
+</script>
+</script>
 </body>
 </html>
