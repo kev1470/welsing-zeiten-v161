@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Welsing Zeiten – v1.6.3b (TEL MobileFix)</title>
+<title>Welsing Zeiten – v1.6.4 (Mobile Compact + TEL Fix)</title>
 <meta name="theme-color" content="#E2231A">
 <style>
   :root{--bg:#0b0c10;--card:#15171c;--ink:#fff;--muted:#c7c7c9;--accent:#F28C00;--accent-ink:#1a1300;--primary:#E2231A;--line:#2a2e36;--focus:#FBB040}
@@ -29,7 +29,7 @@
   .footer>*{flex:1 1 48%}
   iframe#printFrame{position:fixed;left:-9999px;top:-9999px;width:0;height:0;border:0}
 
-  /* --- MOBILE VISIBILITY (TEL) --- */
+  /* --- Mobile Visibility (TEL) --- */
   .hcell input{
     -webkit-appearance:none; appearance:none;
     color: rgba(255,255,255,0.999) !important;
@@ -47,12 +47,22 @@
     -webkit-text-fill-color:#fff !important;
     box-shadow:0 0 0px 1000px #0f1116 inset !important;
   }
+
+  /* --- Mobile Kompakt / Akkordeon --- */
+  .card .content{display:block}
+  .card.collapsed .content{display:none}
+  .card .hdr{display:flex;gap:8px;align-items:center}
+  .card .hdr .grow{flex:1}
+  .hscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .hscroll table{min-width:680px}
+  .mat-wrap.collapsed .mat-table{display:none}
+  .mat-toggle{margin-left:auto}
 </style>
 </head>
 <body>
 <header>
   <b>Welsing Zeiten</b>
-  <div class="ver">v1.6.3b TEL MobileFix</div>
+  <div class="ver">v1.6.4 Mobile Compact</div>
 </header>
 
 <div class="wrap">
@@ -80,6 +90,8 @@
       <button class="btn secondary" id="btnRemK">− Kunde</button>
       <select id="sel"></select>
       <button class="btn" id="btnScroll">Zu Kunde</button>
+      <button class="btn secondary" id="btnCollapseAll">Alle zu</button>
+      <button class="btn secondary" id="btnExpandAll">Alle auf</button>
     </div>
     <div id="kunden"></div>
   </div>
@@ -104,7 +116,7 @@
 <script>
 (function(){
 var st = {kw:"", zr:"", tage:["Mo","Di","Mi","Do","Fr","Sa"], team:["Kevin","Jacub","Mario","Martin","Tomas"], k:[]};
-var KEY="wz_v163_tel"; var lastSel = 0;
+var KEY="wz_v164_compact"; var lastSel = 0;
 
 try{
   var usp = new URLSearchParams(location.search);
@@ -117,7 +129,7 @@ function load(){ try{ var raw=localStorage.getItem(KEY); if(raw) st=Object.assig
 function newK(){ return {n:"", a:"", az:"", ag:"", h: st.team.map(function(){return st.tage.map(function(){return ""})}), m:[{b:"",s:"",r:""}]}; }
 function addKunde(){ st.k.push(newK()); render(); setSel(st.k.length-1); save(); if(window._afterRenderPatch) _afterRenderPatch(); }
 function remKunde(){ if(st.k.length<=1){alert("Mindestens 1 Kunde.");return} var i=lastSel; st.k.splice(i,1); render(); if(i>=st.k.length)i=st.k.length-1; setSel(i); save(); if(window._afterRenderPatch) _afterRenderPatch(); }
-function setSel(v){ lastSel=parseInt(v||"0",10)||0; document.getElementById('sel').value=String(lastSel); document.getElementById('sel2').value=String(lastSel); }
+function setSel(v){ lastSel=parseInt(v||"0",10)||0; document.getElementById('sel').value=String(lastSel); document.getElementById('sel2').value=String(lastSel); expandOnly(lastSel); }
 function scrollSel(){ var el=document.getElementById('k'+lastSel); if(el){ el.scrollIntoView({behavior:'smooth'}); } }
 
 function toggleSun(v){ if(v==="1"){ if(st.tage.indexOf("So")<0) st.tage.push("So"); } else { st.tage=st.tage.filter(function(t){return t!=="So"}); } fixShapes(); render(); save(); if(window._afterRenderPatch) _afterRenderPatch(); }
@@ -139,7 +151,7 @@ function sanitizeDec(s){
   s = (s||"").toString();
   s = s.replace(/,/g,".");      // Komma -> Punkt
   s = s.replace(/[^0-9.]/g,""); // nur Ziffern und Punkt
-  var p = s.indexOf('.'); if(p>=0){ s = s.slice(0,p+1) + s.slice(p+1).replace(/\./g,""); } // nur 1 Punkt
+  var p = s.indexOf('.'); if(p>=0){ s = s.slice(0,p+1) + s.slice(p+1).replace(/\\./g,""); } // nur 1 Punkt
   return s;
 }
 
@@ -175,7 +187,7 @@ function render(){
   setSel(lastSel);
 
   attachDelegates();
-  setTimeout(function(){ computeAllVisibleSums(); forceTelInputs(); },0);
+  setTimeout(function(){ computeAllVisibleSums(); forceTelInputs(); expandOnly(lastSel); },0);
 }
 
 function renderRowSum(i,r){
@@ -209,22 +221,26 @@ function renderLists(){
   for(var r=0;r<st.team.length;r++){
     var w=0, cells='';
     for(var d=0;d<st.tage.length;d++){ cells+='<td>'+grid[r][d].toFixed(2)+'</td>'; w+=grid[r][d]; }
-    rows+='<tr><th style="text-align:left">'+esc(st.team[r])+'</th>'+cells+'<td><b>'+w.toFixed(2)+'</b></td></tr>';
+    rows+='<tr><th style="text-align:left)">'+esc(st.team[r])+'</th>'+cells+'<td><b>'+w.toFixed(2)+'</b></td></tr>';
   }
-  document.getElementById('overview').innerHTML = '<table><thead><tr><th>Monteur</th>'+th+'<th>Woche gesamt</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  document.getElementById('overview').innerHTML = '<div class="hscroll"><table><thead><tr><th>Monteur</th>'+th+'<th>Woche gesamt</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
 
 function card(i){
   var c=st.k[i];
+
+  // Stundenzeilen
   var rows='';
   for(var r=0;r<st.team.length;r++){
-    rows+='<tr data-r="'+r+'"><th style="text-align:left">'+esc(st.team[r])+'</th>';
+    rows+='<tr data-r="'+r+'"><th style="text-align:left)">'+esc(st.team[r])+'</th>';
     for(var d=0;d<st.tage.length;d++){
       var v=c.h[r][d]||'';
       rows+='<td class="hcell"><input type="tel" inputmode="decimal" placeholder="0" value="'+v+'" data-i="'+i+'" data-r="'+r+'" data-d="'+d+'"></td>';
     }
     rows+='<td class="sum-cell"><b>0.00</b></td></tr>';
   }
+
+  // Material
   var mats='';
   for(var m=0;m<c.m.length;m++){
     var it=c.m[m];
@@ -234,23 +250,57 @@ function card(i){
           '<td><button class="btn secondary" data-action="delM" data-i="'+i+'" data-m="'+m+'">−</button></td></tr>';
   }
   if(!mats) mats = '<tr><td colspan="4" style="text-align:center;color:#666">—</td></tr>';
-  return '<div class="card" id="k'+i+'">'+
-    '<div class="row"><span class="pill">Kunde '+String(i+1).padStart(2,"0")+'</span>'+
-    '<button class="btn" data-action="printK" data-i="'+i+'" style="margin-left:auto">PDF Arbeitsbericht</button>'+
-    '<button class="btn" data-action="printKWeekly" data-i="'+i+'">PDF Wochenbericht (Kunde)</button></div>'+
-    '<div class="grid cols2" style="margin-top:6px">'+
-      '<div><label>Name</label><input type="text" value="'+escAttr(c.n)+'" data-action="setF" data-i="'+i+'" data-f="n"></div>'+
-      '<div><label>Adresse</label><input type="text" value="'+escAttr(c.a)+'" data-action="setF" data-i="'+i+'" data-f="a"></div>'+
+
+  // Karte
+  return ''+
+  '<div class="card'+(i===lastSel?'':' collapsed')+'" id="k'+i+'">'+
+    '<div class="hdr">'+
+      '<span class="pill">Kunde '+String(i+1).padStart(2,"0")+'</span>'+
+      '<div class="grow"></div>'+
+      '<button class="btn secondary" data-action="toggleCard" data-i="'+i+'">Auf/Zu</button>'+
+      '<button class="btn" data-action="printK" data-i="'+i+'">PDF Arbeitsbericht</button>'+
+      '<button class="btn" data-action="printKWeekly" data-i="'+i+'">PDF Wochenbericht (Kunde)</button>'+
     '</div>'+
-    '<div class="grid cols2" style="margin-top:6px">'+
-      '<div><label>Auszuführende Arbeit</label><textarea data-action="setF" data-i="'+i+'" data-f="az">'+esc(c.az)+'</textarea></div>'+
-      '<div><label>Ausgeführte Arbeit</label><textarea data-action="setF" data-i="'+i+'" data-f="ag">'+esc(c.ag)+'</textarea></div>'+
+
+    '<div class="content">'+
+      '<div class="grid cols2" style="margin-top:6px">'+
+        '<div><label>Name</label><input type="text" value="'+escAttr(c.n)+'" data-action="setF" data-i="'+i+'" data-f="n"></div>'+
+        '<div><label>Adresse</label><input type="text" value="'+escAttr(c.a)+'" data-action="setF" data-i="'+i+'" data-f="a"></div>'+
+      </div>'+
+
+      '<div class="grid cols2" style="margin-top:6px">'+
+        '<div><label>Auszuführende Arbeit</label><textarea data-action="setF" data-i="'+i+'" data-f="az">'+esc(c.az)+'</textarea></div>'+
+        '<div><label>Ausgeführte Arbeit</label><textarea data-action="setF" data-i="'+i+'" data-f="ag">'+esc(c.ag)+'</textarea></div>'+
+      </div>'+
+
+      '<div style="margin-top:8px"><b>Stunden</b>'+
+        '<div class="hscroll">'+
+          '<table><thead><tr><th>Monteur</th>'+st.tage.map(function(t){return '<th>'+t+'</th>'}).join('')+'<th>Woche gesamt</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+        '</div>'+
+      '</div>'+
+
+      '<div class="mat-wrap collapsed" style="margin-top:8px">'+
+        '<div class="row"><b>Materialverbrauch</b>'+
+          '<button class="btn secondary mat-toggle" data-action="toggleMat" data-i="'+i+'">Material anzeigen</button>'+
+          '<button class="btn secondary" data-action="addM" data-i="'+i+'">+ Material</button>'+
+        '</div>'+
+        '<div class="mat-table" style="margin-top:6px">'+
+          '<table><thead><tr><th>Material</th><th>Stückzahl</th><th>Bemerkung</th><th></th></tr></thead><tbody>'+mats+'</tbody></table>'+
+        '</div>'+
+      '</div>'+
+
     '</div>'+
-    '<div style="margin-top:8px"><b>Stunden</b><table><thead><tr><th>Monteur</th>'+st.tage.map(function(t){return '<th>'+t+'</th>'}).join('')+'<th>Woche gesamt</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
-    '<div style="margin-top:8px"><b>Materialverbrauch</b> <button class="btn secondary" data-action="addM" data-i="'+i+'">+ Material</button>'+
-      '<table style="margin-top:6px"><thead><tr><th>Material</th><th>Stückzahl</th><th>Bemerkung</th><th></th></tr></thead><tbody>'+mats+'</tbody></table></div>'+
   '</div>';
 }
+
+// Akkordeon-Helfer
+function expandOnly(i){
+  document.querySelectorAll('.card[id^="k"]').forEach(function(el,idx){
+    el.classList.toggle('collapsed', idx!==i);
+  });
+}
+function collapseAll(){ document.querySelectorAll('.card[id^="k"]').forEach(function(el){ el.classList.add('collapsed'); }); }
+function expandAll(){ document.querySelectorAll('.card[id^="k"]').forEach(function(el){ el.classList.remove('collapsed'); }); }
 
 function attachDelegates(){
   // top inputs
@@ -266,6 +316,8 @@ function attachDelegates(){
   document.getElementById('btnRemK').onclick = remKunde;
   document.getElementById('sel').onchange = function(){ setSel(this.value); };
   document.getElementById('btnScroll').onclick = scrollSel;
+  document.getElementById('btnCollapseAll').onclick = collapseAll;
+  document.getElementById('btnExpandAll').onclick = expandAll;
 
   // footer
   document.getElementById('sel2').onchange = function(){ setSel(this.value); };
@@ -281,7 +333,6 @@ function attachDelegates(){
       var i=+t.dataset.i, r=+t.dataset.r, d=+t.dataset.d;
       requestAnimationFrame(function(){
         setH(i,r,d,t.value);
-        // Sichtbarkeit absichern
         t.setAttribute('type','tel');
         t.setAttribute('inputmode','decimal');
         t.style.color='rgba(255,255,255,0.999)';
@@ -308,6 +359,17 @@ function attachDelegates(){
     else if(act==="delM"){ var m=+b.dataset.m; delM(i,m); }
     else if(act==="printK") printK(i);
     else if(act==="printKWeekly") printKWeekly(i);
+    else if(act==="toggleCard"){
+      var el=document.getElementById('k'+i);
+      el.classList.toggle('collapsed');
+    }
+    else if(act==="toggleMat"){
+      var card=document.getElementById('k'+i);
+      var mw=card.querySelector('.mat-wrap');
+      var btn=b;
+      var isColl = mw.classList.toggle('collapsed');
+      btn.textContent = isColl ? 'Material anzeigen' : 'Material ausblenden';
+    }
   });
 }
 
@@ -357,8 +419,8 @@ function printK(i){
     pdfHeader('Arbeitsbericht')+
     '<div style="margin-bottom:6px"><b>KW:</b> '+esc(st.kw)+' &nbsp; <b>Zeitraum:</b> '+esc(st.zr)+'</div>'+
     '<table class="meta"><tr><td><b>Kunde:</b> '+esc(c.n||'')+'</td></tr><tr><td><b>Adresse:</b> '+esc(c.a||'')+'</td></tr></table>'+
-    '<h3>Auszuführende Arbeit</h3><div>'+esc((c.az||'').replace(/\n/g,"<br>"))+'</div>'+
-    '<h3>Ausgeführte Arbeit</h3><div>'+esc((c.ag||'').replace(/\n/g,"<br>"))+'</div>'+
+    '<h3>Auszuführende Arbeit</h3><div>'+esc((c.az||'').replace(/\\n/g,"<br>"))+'</div>'+
+    '<h3>Ausgeführte Arbeit</h3><div>'+esc((c.ag||'').replace(/\\n/g,"<br>"))+'</div>'+
     '<h3>Stunden</h3><table><thead><tr><th>Monteur</th>'+head+'<th>Woche gesamt</th></tr></thead><tbody>'+rows+'</tbody></table>'+
     '<h3>Materialverbrauch</h3><table><thead><tr><th>Material</th><th>Stückzahl</th><th>Bemerkung</th></tr></thead><tbody>'+mats+'</tbody></table>'+
     '<div style="display:flex;gap:40px;margin-top:30px"><div style="flex:1"><div>Ort, Datum: ________________________________</div><div class="signature"></div><div>Unterschrift Kunde</div></div><div style="flex:1"><div>Ort, Datum: ________________________________</div><div class="signature"></div><div>Unterschrift Monteur</div></div></div>'+
@@ -417,12 +479,24 @@ function writePrint(html){
 function esc(s){ return (s||'').toString().replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 function escAttr(s){ return (s||'').toString().replace(/&/g,"&amp;").replace(/"/g,"&quot;"); }
 
+function forceTelInputs(){
+  document.querySelectorAll('td.hcell input').forEach(function(inp){
+    inp.setAttribute('type','tel');
+    inp.setAttribute('inputmode','decimal');
+    inp.setAttribute('autocomplete','off');
+    inp.setAttribute('autocapitalize','off');
+    inp.setAttribute('spellcheck','false');
+    inp.style.color='rgba(255,255,255,0.999)';
+    inp.style.webkitTextFillColor='#fff';
+    inp.style.backgroundColor='#0f1116';
+  });
+}
+
 // init
 load();
 if(!st.k || !Array.isArray(st.k) || st.k.length===0){ st.k=[newK()]; }
 render();
-window._afterRenderPatch = forceTelInputs;
-})();
-</script>
+window._afterRenderPatch = function(){ forceTelInputs(); };
+})();</script>
 </body>
 </html>
