@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Welsing Zeiten – v1.6.2 MOBILEFIX</title>
+<title>Welsing Zeiten – v1.6.3 MOBILEFIX+</title>
 <meta name="theme-color" content="#E2231A">
 <style>
   :root{--bg:#0b0c10;--card:#15171c;--ink:#fff;--muted:#c7c7c9;--accent:#F28C00;--accent-ink:#1a1300;--primary:#E2231A;--line:#2a2e36;--focus:#FBB040}
@@ -17,7 +17,7 @@
   .grid{display:grid;gap:10px}.cols2{grid-template-columns:1fr 1fr}@media(max-width:720px){.cols2{grid-template-columns:1fr}}
   label{font-size:13px;color:var(--muted)}
   input,select,textarea,button{font-size:16px}
-  input[type="text"],textarea,select{background:#0f1116;color:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px;width:100%;-webkit-text-fill-color:#fff;color:#fff;caret-color:var(--focus)}
+  input[type="text"],textarea,select{background:#0f1116;border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px;width:100%;-webkit-text-fill-color:#fff;color:#fff;caret-color:var(--focus)}
   textarea{min-height:90px}
   table{border-collapse:collapse;width:100%;background:#0f1116;border-radius:10px;overflow:hidden}
   th,td{border:1px solid var(--line);padding:8px;text-align:center}
@@ -28,13 +28,16 @@
   .footer{position:sticky;bottom:0;background:#0f1116;border-top:3px solid var(--primary);padding:8px 12px;display:flex;gap:8px;flex-wrap:wrap;z-index:9}
   .footer>*{flex:1 1 48%}
   iframe#printFrame{position:fixed;left:-9999px;top:-9999px;width:0;height:0;border:0}
-  .hcell input{ text-align:center; font-size:18px; font-weight:600 }
+  .hcell input{ text-align:center; font-size:18px; font-weight:600; color:#fff !important; -webkit-text-fill-color:#fff !important; background:#0f1116 !important; opacity: 1 !important; }
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus{ -webkit-text-fill-color:#fff !important; box-shadow:0 0 0px 1000px #0f1116 inset !important; }
 </style>
 </head>
 <body>
 <header>
   <b>Welsing Zeiten</b>
-  <div class="ver">v1.6.2 MOBILEFIX</div>
+  <div class="ver">v1.6.3 MOBILEFIX+</div>
 </header>
 
 <div class="wrap">
@@ -85,7 +88,7 @@
 <script>
 (function(){
 var st = {kw:"", zr:"", tage:["Mo","Di","Mi","Do","Fr","Sa"], team:["Kevin","Jacub","Mario","Martin","Tomas"], k:[]};
-var KEY="wz_v162"; var lastSel = 0;
+var KEY="wz_v163"; var lastSel = 0;
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(st)); }catch(e){} }
 function load(){ try{ var raw=localStorage.getItem(KEY); if(raw) st=JSON.parse(raw); }catch(e){} }
 
@@ -252,7 +255,14 @@ function attachDelegates(){
     var t=e.target;
     if(t.matches('td.hcell input')){
       var i=+t.dataset.i, r=+t.dataset.r, d=+t.dataset.d;
-      setH(i,r,d,t.value);
+      // sanitize on next frame to avoid IME flicker
+      requestAnimationFrame(function(){
+        setH(i,r,d,t.value);
+        // enforce visible text inline (android quirk)
+        t.style.color = '#fff';
+        t.style.webkitTextFillColor = '#fff';
+        t.style.backgroundColor = '#0f1116';
+      });
       return;
     }
     if(t.matches('[data-action="setF"]')){
@@ -293,10 +303,6 @@ function computeAllVisibleSums(){
 }
 
 function pdfHeader(title){ return '<div style="margin-bottom:4px;font-weight:700">'+title+'</div>'; }
-
-function printMonteur(r){
-  // (optional hook, nicht genutzt in 1.6.2; bleibt leer)
-}
 
 function printK(i){
   var c=st.k[i];
@@ -373,9 +379,9 @@ function writePrint(html){
 function esc(s){ return (s||'').toString().replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 function escAttr(s){ return (s||'').toString().replace(/&/g,"&amp;").replace(/"/g,"&quot;"); }
 
-// --- MobileFix Block (Android/iOS): Komma->Punkt, Live-Summen, Dezimal-Tastatur ---
+// --- MOBILE VISIBILITY FIXES ---
 function _patchInputsForMobile() {
-  document.querySelectorAll('td.hcell input').forEach(inp => {
+  document.querySelectorAll('td.hcell input').forEach(function(inp){
     if (inp.dataset && inp.dataset.patched) return;
     try {
       inp.type = 'text';
@@ -383,6 +389,10 @@ function _patchInputsForMobile() {
       inp.autocapitalize = 'off';
       inp.autocomplete = 'off';
       inp.spellcheck = false;
+      // enforce visible text inline (android quirk)
+      inp.style.color = '#fff';
+      inp.style.webkitTextFillColor = '#fff';
+      inp.style.backgroundColor = '#0f1116';
       if (inp.dataset) inp.dataset.patched = '1';
     } catch(e){}
   });
@@ -393,21 +403,27 @@ function _sanitizeDecimal(v) {
   if (p >= 0) v = v.slice(0, p + 1) + v.slice(p + 1).replace(/\./g, '');
   return v;
 }
-document.addEventListener('input', (ev) => {
+document.addEventListener('input', function(ev){
   var el = ev.target;
   if (!el || !el.matches || !el.matches('td.hcell input')) return;
-  el.value = _sanitizeDecimal(el.value);
-  var tr = el.closest && el.closest('tr');
-  if (tr) {
-    var sum = 0;
-    tr.querySelectorAll('td.hcell input').forEach(function(i){
-      var n = parseFloat(String(i.value).replace(',', '.'));
-      if (!isNaN(n)) sum += n;
-    });
-    var cell = tr.querySelector('.sum-cell');
-    if (cell) cell.innerHTML = '<b>' + sum.toFixed(2) + '</b>';
-  }
-  if (typeof renderLists === 'function') renderLists();
+  // sanitize on next frame to play nice with Android IME
+  requestAnimationFrame(function(){
+    var san = _sanitizeDecimal(el.value);
+    if (san !== el.value) el.value = san;
+    // inline enforce color (some devices ignore CSS temporarily while typing)
+    el.style.color = '#fff'; el.style.webkitTextFillColor = '#fff'; el.style.backgroundColor = '#0f1116';
+    var tr = el.closest && el.closest('tr');
+    if (tr) {
+      var sum = 0;
+      tr.querySelectorAll('td.hcell input').forEach(function(i){
+        var n = parseFloat(String(i.value).replace(',', '.'));
+        if (!isNaN(n)) sum += n;
+      });
+      var cell = tr.querySelector('.sum-cell');
+      if (cell) cell.innerHTML = '<b>' + sum.toFixed(2) + '</b>';
+    }
+    if (typeof renderLists === 'function') renderLists();
+  });
 });
 document.addEventListener('DOMContentLoaded', function(){
   _patchInputsForMobile();
