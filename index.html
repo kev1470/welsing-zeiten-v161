@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Welsing Zeiten – v1.6.5 clean</title>
+<title>Welsing Zeiten – v1.6.5 Bugfix</title>
 <meta name="theme-color" content="#E2231A">
 <style>
   :root{
@@ -13,7 +13,7 @@
     --muted:#c7c7c9;
     --accent:#F28C00;
     --accent-ink:#1a1300;
-    --primary:#E2231A;
+    --primary:%E2%80%8BE2231A;
     --line:#2a2e36;
     --focus:#FBB040;
   }
@@ -140,7 +140,7 @@
 <body>
 <header>
   <b>Welsing Zeiten</b>
-  <div class="ver">v1.6.5 clean</div>
+  <div class="ver">v1.6.5 Bugfix</div>
 </header>
 
 <div class="wrap">
@@ -202,7 +202,7 @@
   var lastSel = 0;
   var delegatesAttached = false;
 
-  // Nur wenn ?wipe=1 -> Daten löschen
+  // Nur löschen, wenn bewusst ?wipe=1
   try{
     var usp = new URLSearchParams(location.search);
     if (usp.get('wipe') === '1'){
@@ -258,6 +258,7 @@
       while(c.h.length > st.team.length){
         c.h.pop();
       }
+
       for(var r=0;r<c.h.length;r++){
         if(!Array.isArray(c.h[r])) c.h[r] = [];
         while(c.h[r].length < st.tage.length){
@@ -411,7 +412,8 @@
       rows += '<tr data-r="'+r+'"><th style="text-align:left">'+escapeHtml(st.team[r])+'</th>';
       for(var d=0; d<st.tage.length; d++){
         var v = (c.h && c.h[r] && c.h[r][d]) || "";
-        rows += '<td class="hcell"><input type="tel" inputmode="decimal" placeholder="0" value="'+escapeAttr(v)+'" data-i="'+i+'" data-r="'+r+'" data-d="'+d+'"></td>';
+        rows += '<td class="hcell"><input type="tel" inputmode="decimal" placeholder="0" '+
+                'value="'+escapeAttr(v)+'" data-i="'+i+'" data-r="'+r+'" data-d="'+d+'"></td>';
       }
       rows += '<td class="sum-cell"><b>0.00</b></td></tr>';
     }
@@ -435,7 +437,7 @@
         '<div class="row">'+
           '<span class="pill">Kunde '+String(i+1).padStart(2,"0")+'</span>'+
           '<button class="btn" data-action="printK" data-i="'+i+'" style="margin-left:auto">PDF Arbeitsbericht</button>'+
-        </div>'+
+        '</div>'+
         '<div class="grid cols2" style="margin-top:6px">'+
           '<div><label>Name</label><input type="text" value="'+escapeAttr(c.n)+'" data-action="setF" data-i="'+i+'" data-f="n"></div>'+
           '<div><label>Adresse</label><input type="text" value="'+escapeAttr(c.a)+'" data-action="setF" data-i="'+i+'" data-f="a"></div>'+
@@ -454,7 +456,7 @@
           '<b>Materialverbrauch</b> '+
           '<button class="btn secondary" data-action="addM" data-i="'+i+'">+ Material</button>'+
           '<table style="margin-top:6px"><thead><tr><th>Material</th><th>Stückzahl</th><th>Bemerkung</th><th></th></tr></thead><tbody>'+mats+'</tbody></table>'+
-        '</div>'+
+        </div>'+
       '</div>';
   }
 
@@ -565,6 +567,7 @@
     window.addEventListener('beforeunload', function(){
       try{ save(); }catch(e){}
     });
+
     setInterval(function(){
       try{ save(); }catch(e){}
     }, 3000);
@@ -636,7 +639,7 @@
     }
 
     var html='<!doctype html><html><head><meta charset="utf-8"><title>Wochenbericht</title>'+
-      '<style>body{font:12px/1.4 system-ui,Segoe UI,Roboto,Arial;padding:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #777;padding:6px;text-align:center}@page{size:A4;margin:15mm}</style></head><body>'+
+      '<style>body{font:12px/1.4 system-ui,Segoe UI,Roboto,Arial;padding:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #777;padding:6px;text-align:center}@page{size: A4;margin:15mm}</style></head><body>'+
       pdfHeader('Wochenbericht (alle Kunden)')+
       '<div style="margin-bottom:6px"><b>KW:</b> '+escapeHtml(st.kw)+' &nbsp; <b>Zeitraum:</b> '+escapeHtml(st.zr)+'</div>'+
       '<h3>Summen je Monteur / Tag</h3><table><thead><tr><th>Monteur</th>'+head+'<th>Woche gesamt</th></tr></thead><tbody>'+rows+'</tbody></table>'+
