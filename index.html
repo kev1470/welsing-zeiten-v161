@@ -3,79 +3,164 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Welsing Zeiten – v1.6.5 (Kompakt + Monteur-Wochenbericht)</title>
+<title>Welsing Zeiten – v1.6.5 Kompakt + Monteur (stabil)</title>
 <meta name="theme-color" content="#E2231A">
 <style>
-  :root{--bg:#0b0c10;--card:#15171c;--ink:#fff;--muted:#c7c7c9;--accent:#F28C00;--accent-ink:#1a1300;--primary:#E2231A;--line:#2a2e36;--focus:#FBB040}
+  :root{
+    --bg:#0b0c10;
+    --card:#15171c;
+    --ink:#fff;
+    --muted:#c7c7c9;
+    --accent:#F28C00;
+    --accent-ink:#1a1300;
+    --primary:#E2231A;
+    --line:#2a2e36;
+    --focus:#FBB040;
+  }
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.35 system-ui,Segoe UI,Roboto,Arial}
-  header{padding:10px 14px;position:sticky;top:0;z-index:9;background:var(--primary);border-bottom:4px solid var(--focus);display:flex;justify-content:space-between;align-items:center}
-  .ver{font-size:12px;background:#00000033;border:1px solid #ffffff33;padding:2px 6px;border-radius:8px}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font:16px/1.35 system-ui,Segoe UI,Roboto,Arial,sans-serif;
+  }
+  header{
+    padding:10px 14px;
+    position:sticky;
+    top:0;
+    z-index:9;
+    background:var(--primary);
+    border-bottom:4px solid var(--focus);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .ver{
+    font-size:12px;
+    background:#00000033;
+    border:1px solid #ffffff33;
+    padding:2px 6px;
+    border-radius:8px;
+  }
   .wrap{padding:14px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin:10px 0}
-  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:12px;
+    margin:10px 0;
+  }
+  .row{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
   .grid{display:grid;gap:10px}
   .cols2{grid-template-columns:1fr 1fr}
-  @media(max-width:720px){.cols2{grid-template-columns:1fr}}
+  @media(max-width:720px){
+    .cols2{grid-template-columns:1fr}
+  }
   label{font-size:13px;color:var(--muted)}
   input,select,textarea,button{font-size:16px}
   input[type="text"],textarea,select{
-    background:#0f1116;border:1px solid var(--line);border-radius:10px;
-    padding:10px 12px;min-height:44px;width:100%;
-    -webkit-text-fill-color:#fff;color:#fff;caret-color:var(--focus)
+    background:#0f1116;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:10px 12px;
+    min-height:44px;
+    width:100%;
+    -webkit-text-fill-color:#fff;
+    color:#fff;
+    caret-color:var(--focus);
   }
   textarea{min-height:90px}
   table{
-    border-collapse:collapse;width:100%;background:#0f1116;
-    border-radius:10px;overflow:hidden
+    border-collapse:collapse;
+    width:100%;
+    background:#0f1116;
+    border-radius:10px;
+    overflow:hidden;
+    font-size:12px;
   }
-  th,td{border:1px solid var(--line);padding:8px;text-align:center}
-  thead th{background:var(--focus);color:#000;font-weight:800}
+  th,td{
+    border:1px solid var(--line);
+    padding:6px;
+    text-align:center;
+  }
+  thead th{
+    background:var(--focus);
+    color:#000;
+    font-weight:800;
+  }
   .btn{
-    background:var(--accent);color:#1a1300;border:0;border-radius:10px;
-    padding:12px 14px;font-weight:800;cursor:pointer;min-height:44px
+    background:var(--accent);
+    color:var(--accent-ink);
+    border:0;
+    border-radius:10px;
+    padding:10px 12px;
+    font-weight:800;
+    cursor:pointer;
+    min-height:40px;
+    font-size:13px;
   }
-  .btn.secondary{background:transparent;color:#fff;border:2px solid var(--accent)}
+  .btn.secondary{
+    background:transparent;
+    color:#fff;
+    border:2px solid var(--accent);
+  }
   .pill{
-    display:inline-block;background:#0f1116;border:1px solid var(--line);
-    border-radius:999px;padding:6px 10px;font-size:13px
+    display:inline-block;
+    background:#0f1116;
+    border:1px solid var(--line);
+    border-radius:999px;
+    padding:6px 10px;
+    font-size:12px;
   }
   .footer{
-    position:sticky;bottom:0;background:#0f1116;border-top:3px solid var(--primary);
-    padding:8px 12px;display:flex;gap:8px;flex-wrap:wrap;z-index:9
+    position:sticky;
+    bottom:0;
+    background:#0f1116;
+    border-top:3px solid var(--primary);
+    padding:8px 12px;
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    z-index:9;
   }
   .footer>*{flex:1 1 48%}
   iframe#printFrame{
-    position:fixed;left:-9999px;top:-9999px;width:0;height:0;border:0
+    position:fixed;
+    left:-9999px;
+    top:-9999px;
+    width:0;
+    height:0;
+    border:0;
   }
 
-  /* Stundenfelder mobil lesbar */
+  /* Stundenfelder mobil gut sichtbar */
   .hcell input{
-    -webkit-appearance:none;appearance:none;
-    color:rgba(255,255,255,0.999)!important;
-    -webkit-text-fill-color:#fff!important;
+    -webkit-appearance:none;
+    appearance:none;
     background:#0f1116!important;
-    caret-color:#FBB040;
-    opacity:1!important;
-    text-shadow:none!important;
+    border:0;
+    width:100%;
     text-align:center;
-    font-size:18px;font-weight:600;
+    font-size:16px;
+    font-weight:600;
+    color:#ffffff!important;
+    -webkit-text-fill-color:#ffffff!important;
+    caret-color:var(--focus);
   }
-  .hcell input::placeholder{color:#6a6a6a}
-  input:-webkit-autofill,
-  input:-webkit-autofill:hover,
-  input:-webkit-autofill:focus{
-    -webkit-text-fill-color:#fff!important;
-    box-shadow:0 0 0px 1000px #0f1116 inset!important;
-  }
+  .hcell input::placeholder{color:#666}
 
-  /* Tabellen scrollbar & kompakt auf Handy */
+  /* Tabellen auf Handy scrollbar */
   .hscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-  .hscroll table{min-width:680px}
-  @media (max-width:720px){
-    th,td{padding:6px}
-    .btn{padding:10px 12px}
-    .hscroll table{min-width:620px}
+  .hscroll table{min-width:640px}
+  @media(max-width:720px){
+    th,td{padding:4px}
+    .btn{padding:8px 10px}
+    .hscroll table{min-width:560px}
   }
 </style>
 </head>
@@ -86,27 +171,41 @@
 </header>
 
 <div class="wrap">
+  <!-- Kopf -->
   <div class="card">
     <div class="grid cols2">
-      <div><label>KW</label><input id="kw" type="text" placeholder="z. B. KW 42"></div>
-      <div><label>Zeitraum</label><input id="zr" type="text" placeholder="z. B. 13.10.–18.10.2025"></div>
+      <div>
+        <label>KW</label>
+        <input id="kw" type="text" placeholder="z. B. KW 42">
+      </div>
+      <div>
+        <label>Zeitraum</label>
+        <input id="zr" type="text" placeholder="z. B. 13.10.–18.10.2025">
+      </div>
     </div>
     <div class="grid cols2">
-      <div><label>Monteur-Team (Komma)</label><input id="team" type="text" placeholder="z. B. Kevin, Jacub, Mario"></div>
+      <div>
+        <label>Monteur-Team (Komma)</label>
+        <input id="team" type="text" placeholder="z. B. Kevin, Jacub, Mario">
+      </div>
       <div>
         <label>Sonntag</label>
-        <select id="sun"><option value="0">aus</option><option value="1">an</option></select>
+        <select id="sun">
+          <option value="0">aus</option>
+          <option value="1">an</option>
+        </select>
       </div>
     </div>
     <div class="row" style="margin-top:6px">
       <button class="btn secondary" id="btnApplyTeam">Team übernehmen</button>
       <button class="btn" id="btnWeeklyAll">Wochenbericht (alle) PDF</button>
       <select id="selMonteur" title="Monteur wählen"></select>
-      <button class="btn secondary" id="btnWeeklyMonteur">PDF (Wochenbericht Monteur)</button>
-      <button class="btn secondary" id="btnWipe">Daten zurücksetzen</button>
+      <button class="btn secondary" id="btnWeeklyMonteur">PDF Monteur Woche</button>
+      <button class="btn secondary" id="btnWipe">Daten löschen</button>
     </div>
   </div>
 
+  <!-- Kunden -->
   <div class="card">
     <div class="row" style="margin-bottom:8px">
       <button class="btn secondary" id="btnAddK">+ Kunde</button>
@@ -117,10 +216,11 @@
     <div id="kunden"></div>
   </div>
 
+  <!-- Wochenübersicht -->
   <div class="card">
     <div class="row" style="justify-content:space-between;width:100%">
       <b>Wochenübersicht (Summe je Monteur & Tag)</b>
-      <span style="color:#bbb">zum Nachschauen</span>
+      <span style="color:#bbb">nur zur Kontrolle</span>
     </div>
     <div id="overview"></div>
   </div>
@@ -129,47 +229,53 @@
 <div class="footer">
   <select id="sel2"></select>
   <button class="btn secondary" id="btnScroll2">Zu Kunde</button>
-  <button class="btn" id="btnPdfArbeitsbericht">PDF (Arbeitsbericht Kunde)</button>
+  <button class="btn" id="btnPdfArbeitsbericht">PDF Kunde</button>
 </div>
 
 <iframe id="printFrame"></iframe>
 
 <script>
 (function(){
+  var KEY = "wz_v165_compact_monteur";
   var st = {
-    kw:"",
-    zr:"",
-    tage:["Mo","Di","Mi","Do","Fr","Sa"],
-    team:["Kevin","Jacub","Mario","Martin","Tomas"],
-    k:[]
+    kw: "",
+    zr: "",
+    tage: ["Mo","Di","Mi","Do","Fr","Sa"],
+    team: ["Kevin","Jacub","Mario","Martin","Tomas"],
+    k: []
   };
-  var KEY="wz_v165_compact_monteur";
   var lastSel = 0;
-  var delegatesAttached = false; // <<< WICHTIG: neu, verhindert mehrfach-Listener
+  var delegatesAttached = false;
 
-  // optional: wipe per URL
-  try{
-    var usp = new URLSearchParams(location.search);
-    if (usp.get('wipe')==='1'){ localStorage.clear(); }
-  }catch(e){}
-
-  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(st)); }catch(e){} }
+  // ==== Helpers ====
+  function escapeHtml(s){
+    return (s||"").toString()
+      .replace(/&/g,"&amp;")
+      .replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;");
+  }
+  function escapeAttr(s){
+    return (s||"").toString()
+      .replace(/&/g,"&amp;")
+      .replace(/"/g,"&quot;");
+  }
+  function save(){
+    try{ localStorage.setItem(KEY, JSON.stringify(st)); }catch(e){}
+  }
   function load(){
     try{
-      var raw=localStorage.getItem(KEY);
-      if(raw){
-        var o=JSON.parse(raw)||{};
-        if(o && typeof o==='object'){
-          if(o.kw) st.kw=o.kw;
-          if(o.zr) st.zr=o.zr;
-          if(Array.isArray(o.tage)) st.tage=o.tage;
-          if(Array.isArray(o.team)) st.team=o.team;
-          if(Array.isArray(o.k)) st.k=o.k;
-        }
-      }
+      var raw = localStorage.getItem(KEY);
+      if(!raw) return;
+      var o = JSON.parse(raw) || {};
+      if(o.kw) st.kw = o.kw;
+      if(o.zr) st.zr = o.zr;
+      if(Array.isArray(o.tage) && o.tage.length) st.tage = o.tage;
+      if(Array.isArray(o.team) && o.team.length) st.team = o.team;
+      if(Array.isArray(o.k) && o.k.length) st.k = o.k;
     }catch(e){}
   }
 
+  // ==== Struktur ====
   function newK(){
     return {
       n:"",
@@ -180,322 +286,328 @@
       m:[{b:"",s:"",r:""}]
     };
   }
-
   function ensureAtLeastOneKunde(){
     if(!Array.isArray(st.k) || st.k.length===0){
-      st.k=[newK()];
+      st.k = [newK()];
     }
   }
-
   function fixShapes(){
     ensureAtLeastOneKunde();
     for(var i=0;i<st.k.length;i++){
-      var c=st.k[i];
-      if(!Array.isArray(c.h)) c.h=[];
-      while(c.h.length<st.team.length)
+      var c = st.k[i];
+      if(!Array.isArray(c.h)) c.h = [];
+      // Zeilen = Monteure
+      while(c.h.length < st.team.length)
         c.h.push(st.tage.map(function(){return ""}));
-      while(c.h.length>st.team.length)
+      while(c.h.length > st.team.length)
         c.h.pop();
+      // Spalten = Tage
       for(var r=0;r<c.h.length;r++){
-        if(!Array.isArray(c.h[r])) c.h[r]=[];
-        while(c.h[r].length<st.tage.length)
+        if(!Array.isArray(c.h[r])) c.h[r] = [];
+        while(c.h[r].length < st.tage.length)
           c.h[r].push("");
-        while(c.h[r].length>st.tage.length)
+        while(c.h[r].length > st.tage.length)
           c.h[r].pop();
       }
+      // Material
       if(!Array.isArray(c.m) || c.m.length===0)
         c.m=[{b:"",s:"",r:""}];
     }
   }
 
   function sanitizeDec(s){
-    s=(s||"").toString().replace(/,/g,".").replace(/[^0-9.]/g,"");
-    var p=s.indexOf('.');
-    if(p>=0) s=s.slice(0,p+1)+s.slice(p+1).replace(/\./g,"");
+    s = (s||"").toString().replace(/,/g,".").replace(/[^0-9.]/g,"");
+    var p = s.indexOf(".");
+    if(p>=0){
+      s = s.slice(0,p+1) + s.slice(p+1).replace(/\./g,"");
+    }
     return s;
   }
 
+  // ==== Mutationen ====
   function setH(i,r,d,v){
-    v=sanitizeDec(v);
-    st.k[i].h[r][d]=v;
-    save();
-    renderRowSum(i,r);
-    renderLists();
+    v = sanitizeDec(v);
+    if(st.k[i] && st.k[i].h && st.k[i].h[r]){
+      st.k[i].h[r][d] = v;
+      save();
+      updateRowSum(i,r);
+      renderOverview();
+    }
   }
-
   function setF(i,f,v){
-    st.k[i][f]=v;
-    save();
-    renderLists();
+    if(st.k[i]){
+      st.k[i][f] = v;
+      save();
+      renderOverview();
+    }
   }
-
   function addM(i){
-    st.k[i].m.push({b:"",s:"",r:""});
-    save();
-    render();
-    forceTelInputs();
-  }
-
-  function delM(i,m){
-    st.k[i].m.splice(m,1);
-    if(st.k[i].m.length===0)
+    if(st.k[i]){
       st.k[i].m.push({b:"",s:"",r:""});
-    save();
-    render();
-    forceTelInputs();
+      save();
+      render();
+    }
   }
-
+  function delM(i,m){
+    if(st.k[i] && st.k[i].m && st.k[i].m[m]!=null){
+      st.k[i].m.splice(m,1);
+      if(st.k[i].m.length===0)
+        st.k[i].m.push({b:"",s:"",r:""});
+      save();
+      render();
+    }
+  }
   function setM(i,m,f,v){
-    st.k[i].m[m][f]=v;
-    save();
+    if(st.k[i] && st.k[i].m && st.k[i].m[m]){
+      st.k[i].m[m][f] = v;
+      save();
+    }
   }
-
   function addKunde(){
     st.k.push(newK());
+    save();
     render();
     setSel(st.k.length-1);
-    save();
-    forceTelInputs();
   }
-
   function remKunde(){
     if(st.k.length<=1){
       alert("Mindestens 1 Kunde.");
       return;
     }
-    var i=lastSel;
-    st.k.splice(i,1);
-    if(i>=st.k.length) i=st.k.length-1;
-    render();
-    setSel(i);
+    st.k.splice(lastSel,1);
+    if(lastSel>=st.k.length) lastSel = st.k.length-1;
     save();
-    forceTelInputs();
+    render();
+    setSel(lastSel);
   }
-
   function setSel(v){
-    lastSel=parseInt(v||"0",10)||0;
-    var s1=document.getElementById('sel');
-    var s2=document.getElementById('sel2');
-    if(s1) s1.value=String(lastSel);
-    if(s2) s2.value=String(lastSel);
+    lastSel = parseInt(v||"0",10) || 0;
+    var s1 = document.getElementById("sel");
+    var s2 = document.getElementById("sel2");
+    if(s1) s1.value = String(lastSel);
+    if(s2) s2.value = String(lastSel);
   }
-
   function scrollSel(){
-    var el=document.getElementById('k'+lastSel);
-    if(el) el.scrollIntoView({behavior:'smooth'});
+    var el = document.getElementById("k"+lastSel);
+    if(el) el.scrollIntoView({behavior:"smooth"});
   }
-
   function toggleSun(v){
     if(v==="1"){
       if(st.tage.indexOf("So")<0) st.tage.push("So");
     }else{
-      st.tage=st.tage.filter(function(t){return t!=="So"});
+      st.tage = st.tage.filter(function(t){return t!=="So"});
     }
     fixShapes();
-    render();
     save();
-    forceTelInputs();
+    render();
   }
-
   function applyTeam(){
-    var arr=document.getElementById('team').value
-      .split(',')
-      .map(function(s){return s.trim()})
-      .filter(Boolean);
+    var raw = document.getElementById("team").value;
+    var arr = raw.split(",").map(function(s){return s.trim();}).filter(Boolean);
     if(arr.length){
-      st.team=arr;
+      st.team = arr;
       fixShapes();
-      render();
       save();
-      forceTelInputs();
+      render();
     }
   }
 
-  function renderRowSum(i,r){
-    var card=document.getElementById('k'+i);
+  // ==== Rendering ====
+  function updateRowSum(i,r){
+    var card = document.getElementById("k"+i);
     if(!card) return;
-    var tr=card.querySelector('tr[data-r="'+r+'"]');
+    var tr = card.querySelector('tr[data-r="'+r+'"]');
     if(!tr) return;
-    var inputs=tr.querySelectorAll('td.hcell input');
-    var sum=0;
-    inputs.forEach(function(inp){
-      var v=(inp.value||'').replace(/,/g,'.');
-      var n=parseFloat(v);
-      if(!isNaN(n)) sum+=n;
+    var sum = 0;
+    tr.querySelectorAll("td.hcell input").forEach(function(inp){
+      var v = (inp.value||"").replace(/,/g,".");
+      var n = parseFloat(v);
+      if(!isNaN(n)) sum += n;
     });
-    var last=tr.querySelector('td.sum-cell');
-    if(last) last.innerHTML='<b>'+sum.toFixed(2)+'</b>';
+    var cell = tr.querySelector("td.sum-cell");
+    if(cell) cell.innerHTML = "<b>"+sum.toFixed(2)+"</b>";
   }
 
-  function renderLists(){
-    var grid=st.team.map(function(){return st.tage.map(function(){return 0;});});
+  function renderOverview(){
+    var grid = st.team.map(function(){
+      return st.tage.map(function(){return 0;});
+    });
     for(var k=0;k<st.k.length;k++){
+      var c = st.k[k];
       for(var r=0;r<st.team.length;r++){
         for(var d=0;d<st.tage.length;d++){
-          var v=parseFloat(st.k[k].h[r][d]||0)||0;
-          grid[r][d]+=v;
+          var v = parseFloat(c.h[r] ? (c.h[r][d]||0) : 0) || 0;
+          grid[r][d] += v;
         }
       }
     }
-    var th=st.tage.map(function(t){return '<th>'+t+'</th>';}).join('');
-    var rows='';
+    var head = st.tage.map(function(t){return "<th>"+t+"</th>";}).join("");
+    var rows = "";
     for(var r=0;r<st.team.length;r++){
-      var w=0,cells='';
+      var w=0, cells="";
       for(var d=0;d<st.tage.length;d++){
-        cells+='<td>'+grid[r][d].toFixed(2)+'</td>';
-        w+=grid[r][d];
+        w += grid[r][d];
+        cells += "<td>"+grid[r][d].toFixed(2)+"</td>";
       }
-      rows+='<tr><th style="text-align:left">'+escapeHtml(st.team[r])+'</th>'+cells+'<td><b>'+w.toFixed(2)+'</b></td></tr>';
+      rows += "<tr><th style='text-align:left'>"+escapeHtml(st.team[r])+"</th>"+cells+"<td><b>"+w.toFixed(2)+"</b></td></tr>";
     }
-    document.getElementById('overview').innerHTML =
-      '<div class="hscroll"><table><thead><tr><th>Monteur</th>'+th+'<th>Woche gesamt</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+    document.getElementById("overview").innerHTML =
+      "<div class='hscroll'><table><thead><tr><th>Monteur</th>"+head+"<th>Woche gesamt</th></tr></thead><tbody>"+rows+"</tbody></table></div>";
   }
 
-  function card(i){
-    var c=st.k[i];
-    var rows='';
+  function kundenCard(i){
+    var c = st.k[i];
+    // Stunden-Zeilen
+    var rows = "";
     for(var r=0;r<st.team.length;r++){
-      rows+='<tr data-r="'+r+'"><th style="text-align:left">'+escapeHtml(st.team[r])+'</th>';
+      rows += "<tr data-r='"+r+"'><th style='text-align:left'>"+escapeHtml(st.team[r])+"</th>";
       for(var d=0;d<st.tage.length;d++){
-        var v=c.h[r][d]||'';
-        rows+='<td class="hcell"><input type="tel" inputmode="decimal" placeholder="0" '+
-              'value="'+escapeAttr(v)+'" data-i="'+i+'" data-r="'+r+'" data-d="'+d+'"></td>';
+        var v = (c.h[r] && c.h[r][d]) || "";
+        rows += "<td class='hcell'><input type='tel' inputmode='decimal' placeholder='0'"+
+                " value='"+escapeAttr(v)+"' data-i='"+i+"' data-r='"+r+"' data-d='"+d+"'></td>";
       }
-      rows+='<td class="sum-cell"><b>0.00</b></td></tr>';
+      rows += "<td class='sum-cell'><b>0.00</b></td></tr>";
     }
-
-    var mats='';
+    // Material-Zeilen
+    var mats = "";
     for(var m=0;m<c.m.length;m++){
-      var it=c.m[m];
-      mats+='<tr>'+
-        '<td><input type="text" value="'+escapeAttr(it.b)+'" data-i="'+i+'" data-m="'+m+'" data-f="b"></td>'+
-        '<td><input type="text" value="'+escapeAttr(it.s)+'" data-i="'+i+'" data-m="'+m+'" data-f="s"></td>'+
-        '<td><input type="text" value="'+escapeAttr(it.r)+'" data-i="'+i+'" data-m="'+m+'" data-f="r"></td>'+
-        '<td><button class="btn secondary" data-action="delM" data-i="'+i+'" data-m="'+m+'">−</button></td>'+
-      '</tr>';
+      var it = c.m[m];
+      mats += "<tr>"+
+        "<td><input type='text' value='"+escapeAttr(it.b)+"' data-i='"+i+"' data-m='"+m+"' data-f='b'></td>"+
+        "<td><input type='text' value='"+escapeAttr(it.s)+"' data-i='"+i+"' data-m='"+m+"' data-f='s'></td>"+
+        "<td><input type='text' value='"+escapeAttr(it.r)+"' data-i='"+i+"' data-m='"+m+"' data-f='r'></td>"+
+        "<td><button class='btn secondary' data-action='delM' data-i='"+i+"' data-m='"+m+"'>−</button></td>"+
+      "</tr>";
     }
-    if(!mats) mats='<tr><td colspan="4" style="text-align:center;color:#666">—</td></tr>';
-
-    return ''+
-      '<div class="card" id="k'+i+'">'+
-        '<div class="row">'+
-          '<span class="pill">Kunde '+String(i+1).padStart(2,"0")+'</span>'+
-          '<button class="btn" data-action="printK" data-i="'+i+'" style="margin-left:auto">PDF Arbeitsbericht</button>'+
-        '</div>'+
-        '<div class="grid cols2" style="margin-top:6px">'+
-          '<div><label>Name</label><input type="text" value="'+escapeAttr(c.n)+'" data-action="setF" data-i="'+i+'" data-f="n"></div>'+
-          '<div><label>Adresse</label><input type="text" value="'+escapeAttr(c.a)+'" data-action="setF" data-i="'+i+'" data-f="a"></div>'+
-        '</div>'+
-        '<div class="grid cols2" style="margin-top:6px">'+
-          '<div><label>Auszuführende Arbeit</label><textarea data-action="setF" data-i="'+i+'" data-f="az">'+escapeHtml(c.az)+'</textarea></div>'+
-          '<div><label>Ausgeführte Arbeit</label><textarea data-action="setF" data-i="'+i+'" data-f="ag">'+escapeHtml(c.ag)+'</textarea></div>'+
-        '</div>'+
-        '<div style="margin-top:8px"><b>Stunden</b>'+
-          '<div class="hscroll">'+
-            '<table><thead><tr><th>Monteur</th>'+st.tage.map(function(t){return '<th>'+t+'</th>'}).join('')+'<th>Woche gesamt</th></tr></thead><tbody>'+rows+'</tbody></table>'+
-          '</div>'+
-        '</div>'+
-        '<div style="margin-top:8px"><b>Materialverbrauch</b> '+
-          '<button class="btn secondary" data-action="addM" data-i="'+i+'">+ Material</button>'+
-          '<div class="hscroll">'+
-            '<table style="margin-top:6px"><thead><tr><th>Material</th><th>Stückzahl</th><th>Bemerkung</th><th></th></tr></thead><tbody>'+mats+'</tbody></table>'+
-          '</div>'+
-        '</div>'+
-      '</div>';
+    if(!mats){
+      mats = "<tr><td colspan='4' style='color:#666'>—</td></tr>";
+    }
+    return ""+
+      "<div class='card' id='k"+i+"'>"+
+        "<div class='row'>"+
+          "<span class='pill'>Kunde "+String(i+1).padStart(2,"0")+"</span>"+
+          "<button class='btn' data-action='printK' data-i='"+i+"' style='margin-left:auto'>PDF Arbeitsbericht</button>"+
+        "</div>"+
+        "<div class='grid cols2' style='margin-top:6px'>"+
+          "<div><label>Name</label><input type='text' value='"+escapeAttr(c.n)+"' data-action='setF' data-i='"+i+"' data-f='n'></div>"+
+          "<div><label>Adresse</label><input type='text' value='"+escapeAttr(c.a)+"' data-action='setF' data-i='"+i+"' data-f='a'></div>"+
+        "</div>"+
+        "<div class='grid cols2' style='margin-top:6px'>"+
+          "<div><label>Auszuführende Arbeit</label><textarea data-action='setF' data-i='"+i+"' data-f='az'>"+escapeHtml(c.az)+"</textarea></div>"+
+          "<div><label>Ausgeführte Arbeit</label><textarea data-action='setF' data-i='"+i+"' data-f='ag'>"+escapeHtml(c.ag)+"</textarea></div>"+
+        "</div>"+
+        "<div style='margin-top:8px'><b>Stunden</b>"+
+          "<div class='hscroll'>"+
+            "<table><thead><tr><th>Monteur</th>"+st.tage.map(function(t){return "<th>"+t+"</th>"}).join("")+"<th>Woche gesamt</th></tr></thead>"+
+            "<tbody>"+rows+"</tbody></table>"+
+          "</div>"+
+        "</div>"+
+        "<div style='margin-top:8px'><b>Materialverbrauch</b> "+
+          "<button class='btn secondary' data-action='addM' data-i='"+i+"'>+ Material</button>"+
+          "<div class='hscroll'>"+
+            "<table style='margin-top:6px'><thead><tr><th>Material</th><th>Stückzahl</th><th>Bemerkung</th><th></th></tr></thead>"+
+            "<tbody>"+mats+"</tbody></table>"+
+          "</div>"+
+        "</div>"+
+      "</div>";
   }
 
   function render(){
     fixShapes();
 
-    document.getElementById('kw').value = st.kw;
-    document.getElementById('zr').value = st.zr;
-    document.getElementById('sun').value = st.tage.indexOf("So")>=0 ? "1":"0";
-    document.getElementById('team').value = st.team.join(', ');
+    // Kopf
+    document.getElementById("kw").value = st.kw;
+    document.getElementById("zr").value = st.zr;
+    document.getElementById("sun").value = st.tage.indexOf("So")>=0 ? "1" : "0";
+    document.getElementById("team").value = st.team.join(", ");
 
-    // Monteure
-    document.getElementById('selMonteur').innerHTML =
-      st.team.map(function(n,idx){return '<option value="'+idx+'">'+escapeHtml(n)+'</option>';}).join('');
+    // Monteur-Auswahl
+    document.getElementById("selMonteur").innerHTML =
+      st.team.map(function(n,i){return "<option value='"+i+"'>"+escapeHtml(n)+"</option>";}).join("");
 
-    // Kunden-Auswahl
-    var opts='';
+    // Kunden-Selects
+    var opts = "";
     for(var i=0;i<st.k.length;i++){
-      opts+='<option value="'+i+'">'+String(i+1).padStart(2,'0')+' — '+escapeHtml(st.k[i].n||'Kunde')+'</option>';
+      opts += "<option value='"+i+"'>"+String(i+1).padStart(2,"0")+" — "+escapeHtml(st.k[i].n || "Kunde")+"</option>";
     }
-    if(!opts){
-      st.k=[newK()];
-      opts='<option value="0">01 — Kunde</option>';
-    }
-    document.getElementById('sel').innerHTML=opts;
-    document.getElementById('sel2').innerHTML=opts;
+    document.getElementById("sel").innerHTML = opts;
+    document.getElementById("sel2").innerHTML = opts;
 
     // Kundenkarten
-    var out='';
-    for(var j=0;j<st.k.length;j++){ out+=card(j); }
-    document.getElementById('kunden').innerHTML=out;
+    var html = "";
+    for(var j=0;j<st.k.length;j++){
+      html += kundenCard(j);
+    }
+    document.getElementById("kunden").innerHTML = html;
 
-    renderLists();
+    renderOverview();
     setSel(lastSel);
-    attachDelegates();
-    setTimeout(function(){ computeAllVisibleSums(); forceTelInputs(); },0);
+    attachDelegatesOnce();
+    setTimeout(function(){
+      // initial Summen aktualisieren
+      document.querySelectorAll("#kunden tr[data-r]").forEach(function(tr){
+        var i = tr.closest(".card").id.replace("k","");
+        var r = tr.getAttribute("data-r");
+        updateRowSum(parseInt(i,10), parseInt(r,10));
+      });
+    },0);
   }
 
-  function attachDelegates(){
-    if (delegatesAttached) return;          // <<< Neu: nur einmal anhängen
+  // ==== Events ====
+  function attachDelegatesOnce(){
+    if(delegatesAttached) return;
     delegatesAttached = true;
 
     // Kopf
-    document.getElementById('kw').oninput = function(){ st.kw=this.value; save(); };
-    document.getElementById('zr').oninput = function(){ st.zr=this.value; save(); };
-    document.getElementById('sun').onchange = function(){ toggleSun(this.value); };
-    document.getElementById('btnApplyTeam').onclick = applyTeam;
-    document.getElementById('btnWeeklyAll').onclick = printWeekly;
-    document.getElementById('btnWeeklyMonteur').onclick = function(){
-      var sel=document.getElementById('selMonteur');
-      var r=parseInt(sel.value||"0",10)||0;
+    document.getElementById("kw").addEventListener("input", function(){ st.kw=this.value; save(); });
+    document.getElementById("zr").addEventListener("input", function(){ st.zr=this.value; save(); });
+    document.getElementById("sun").addEventListener("change", function(){ toggleSun(this.value); });
+    document.getElementById("btnApplyTeam").addEventListener("click", applyTeam);
+
+    // Wochenberichte
+    document.getElementById("btnWeeklyAll").addEventListener("click", printWeeklyAll);
+    document.getElementById("btnWeeklyMonteur").addEventListener("click", function(){
+      var r = parseInt(document.getElementById("selMonteur").value || "0", 10) || 0;
       printMonteurWeekly(r);
-    };
-    document.getElementById('btnWipe').onclick = function(){
-      if(confirm("Alle Daten löschen?")){
+    });
+
+    // Wipe
+    document.getElementById("btnWipe").addEventListener("click", function(){
+      if(confirm("Alle gespeicherten Daten löschen?")){
         try{ localStorage.removeItem(KEY); }catch(e){}
-        location.href='?wipe=1&cb='+(Date.now());
-      }
-    };
-
-    // Kundensteuerung
-    document.getElementById('btnAddK').onclick = addKunde;
-    document.getElementById('btnRemK').onclick = remKunde;
-    document.getElementById('sel').onchange = function(){ setSel(this.value); };
-    document.getElementById('btnScroll').onclick = scrollSel;
-
-    document.getElementById('sel2').onchange = function(){ setSel(this.value); };
-    document.getElementById('btnScroll2').onclick = scrollSel;
-    document.getElementById('btnPdfArbeitsbericht').onclick = function(){ printK(lastSel); };
-
-    // Delegation im Kundenbereich (nur EINMAL)
-    var kc=document.getElementById('kunden');
-
-    kc.addEventListener('input', function(e){
-      var t=e.target;
-      if(t.matches('td.hcell input')){
-        var i=+t.dataset.i, r=+t.dataset.r, d=+t.dataset.d;
-        setH(i,r,d,t.value);
-        return;
-      }
-      if(t.matches('[data-action="setF"]')){
-        setF(+t.dataset.i, t.dataset.f, t.value);
-        return;
-      }
-      if(t.matches('input[data-f], textarea[data-f]') && t.dataset.m !== undefined){
-        setM(+t.dataset.i, +t.dataset.m, t.dataset.f, t.value);
-        return;
+        location.reload();
       }
     });
 
-    kc.addEventListener('click', function(e){
-      var b=e.target.closest('button[data-action]');
+    // Kundensteuerung
+    document.getElementById("btnAddK").addEventListener("click", addKunde);
+    document.getElementById("btnRemK").addEventListener("click", remKunde);
+    document.getElementById("sel").addEventListener("change", function(){ setSel(this.value); });
+    document.getElementById("btnScroll").addEventListener("click", scrollSel);
+
+    document.getElementById("sel2").addEventListener("change", function(){ setSel(this.value); });
+    document.getElementById("btnScroll2").addEventListener("click", scrollSel);
+    document.getElementById("btnPdfArbeitsbericht").addEventListener("click", function(){ printK(lastSel); });
+
+    // Delegation im Kundenbereich → verhindert Material-Bug
+    var kc = document.getElementById("kunden");
+
+    kc.addEventListener("input", function(e){
+      var t = e.target;
+      if(t.matches("td.hcell input")){
+        setH(+t.dataset.i, +t.dataset.r, +t.dataset.d, t.value);
+      }else if(t.matches("[data-action='setF']")){
+        setF(+t.dataset.i, t.dataset.f, t.value);
+      }else if(t.dataset.f && t.dataset.m !== undefined){
+        setM(+t.dataset.i, +t.dataset.m, t.dataset.f, t.value);
+      }
+    });
+
+    kc.addEventListener("click", function(e){
+      var b = e.target.closest("button[data-action]");
       if(!b) return;
-      var act=b.dataset.action;
-      var i=+b.dataset.i;
+      var act = b.dataset.action;
+      var i = +b.dataset.i;
       if(act==="addM"){
         addM(i);
       }else if(act==="delM"){
@@ -504,182 +616,146 @@
         printK(i);
       }
     });
-
-    window.addEventListener("beforeunload", function(){ try{ save(); }catch(e){} });
-    setInterval(function(){ try{ save(); }catch(e){} }, 3000);
   }
 
-  function computeAllVisibleSums(){
-    document.querySelectorAll('#kunden tr').forEach(function(tr){
-      var inputs=tr.querySelectorAll('td.hcell input');
-      if(!inputs.length) return;
-      var sum=0;
-      inputs.forEach(function(inp){
-        var v=(inp.value||'').replace(/,/g,'.');
-        var n=parseFloat(v);
-        if(!isNaN(n)) sum+=n;
-      });
-      var last=tr.querySelector('td.sum-cell');
-      if(last) last.innerHTML='<b>'+sum.toFixed(2)+'</b>';
-    });
-  }
-
+  // ==== PDF ====
   function pdfHeader(title){
-    return '<div style="margin-bottom:4px;font-weight:700">'+title+'</div>';
+    return "<div style='margin-bottom:4px;font-weight:700'>"+title+"</div>";
   }
-
   function writePrint(html){
-    var fr=document.getElementById('printFrame');
-    var win=fr.contentWindow || fr;
-    var doc=win.document;
+    var fr = document.getElementById("printFrame");
+    var win = fr.contentWindow || fr;
+    var doc = win.document;
     doc.open(); doc.write(html); doc.close();
   }
 
   function printK(i){
-    var c=st.k[i];
-    var head=st.tage.map(function(t){return '<th>'+t+'</th>';}).join('');
-    var rows='';
+    var c = st.k[i];
+    var head = st.tage.map(function(t){return "<th>"+t+"</th>";}).join("");
+    var rows = "";
     for(var r=0;r<st.team.length;r++){
-      var sum=0,cells='';
+      var sum=0, cells="";
       for(var d=0;d<st.tage.length;d++){
-        var n=parseFloat(c.h[r][d]||0) || 0;
-        sum+=n;
-        cells+='<td>'+n.toFixed(2)+'</td>';
+        var n = parseFloat(c.h[r] ? (c.h[r][d]||0) : 0) || 0;
+        sum += n;
+        cells += "<td>"+n.toFixed(2)+"</td>";
       }
-      rows+='<tr><th style="text-align:left">'+escapeHtml(st.team[r])+'</th>'+cells+'<td><b>'+sum.toFixed(2)+'</b></td></tr>';
+      rows += "<tr><th style='text-align:left'>"+escapeHtml(st.team[r])+"</th>"+cells+"<td><b>"+sum.toFixed(2)+"</b></td></tr>";
     }
-    var mats='';
+    var mats = "";
     for(var m=0;m<c.m.length;m++){
-      var it=c.m[m];
-      mats+='<tr><td>'+escapeHtml(it.b||'')+'</td><td>'+escapeHtml(it.s||'')+'</td><td>'+escapeHtml(it.r||'')+'</td></tr>';
+      var it = c.m[m];
+      mats += "<tr><td>"+escapeHtml(it.b||"")+"</td><td>"+escapeHtml(it.s||"")+"</td><td>"+escapeHtml(it.r||"")+"</td></tr>";
     }
-    if(!mats) mats='<tr><td colspan="3" style="text-align:center;color:#666">—</td></tr>';
+    if(!mats) mats = "<tr><td colspan='3' style='text-align:center;color:#666'>—</td></tr>";
 
-    var html='<!doctype html><html><head><meta charset="utf-8"><title>Arbeitsbericht</title>'+
-      '<style>body{font:12px/1.4 system-ui,Segoe UI,Roboto,Arial;padding:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #777;padding:6px;text-align:center}.meta td{border:none;text-align:left;padding:2px 0}.signature{height:60px;border-top:1px solid #777;margin-top:24px}@page{size:A4;margin:15mm}</style></head><body>'+
-      pdfHeader('Arbeitsbericht')+
-      '<div style="margin-bottom:6px"><b>KW:</b> '+escapeHtml(st.kw)+' &nbsp; <b>Zeitraum:</b> '+escapeHtml(st.zr)+'</div>'+
-      '<table class="meta"><tr><td><b>Kunde:</b> '+escapeHtml(c.n||'')+'</td></tr><tr><td><b>Adresse:</b> '+escapeHtml(c.a||'')+'</td></tr></table>'+
-      '<h3>Auszuführende Arbeit</h3><div>'+escapeHtml(c.az||'').replace(/\n/g,"<br>")+'</div>'+
-      '<h3>Ausgeführte Arbeit</h3><div>'+escapeHtml(c.ag||'').replace(/\n/g,"<br>")+'</div>'+
-      '<h3>Stunden</h3><table><thead><tr><th>Monteur</th>'+head+'<th>Woche gesamt</th></tr></thead><tbody>'+rows+'</tbody></table>'+
-      '<h3>Materialverbrauch</h3><table><thead><tr><th>Material</th><th>Stückzahl</th><th>Bemerkung</th></tr></thead><tbody>'+mats+'</tbody></table>'+
-      '<div style="display:flex;gap:40px;margin-top:30px"><div style="flex:1"><div>Ort, Datum: ________________________________</div><div class="signature"></div><div>Unterschrift Kunde</div></div><div style="flex:1"><div>Ort, Datum: ________________________________</div><div class="signature"></div><div>Unterschrift Monteur</div></div></div>'+
-      '<script>onload=function(){print()}</script></body></html>';
+    var html = "<!doctype html><html><head><meta charset='utf-8'><title>Arbeitsbericht</title>"+
+      "<style>body{font:12px/1.4 system-ui,Segoe UI,Roboto,Arial;padding:18px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #777;padding:5px;text-align:center}.meta td{border:none;text-align:left;padding:2px 0}.signature{height:50px;border-top:1px solid #777;margin-top:20px}@page{size:A4;margin:14mm}</style></head><body>"+
+      pdfHeader("Arbeitsbericht")+
+      "<div><b>KW:</b> "+escapeHtml(st.kw)+" &nbsp; <b>Zeitraum:</b> "+escapeHtml(st.zr)+"</div>"+
+      "<table class='meta'><tr><td><b>Kunde:</b> "+escapeHtml(c.n||"")+"</td></tr><tr><td><b>Adresse:</b> "+escapeHtml(c.a||"")+"</td></tr></table>"+
+      "<h3>Auszuführende Arbeit</h3><div>"+escapeHtml(c.az||"").replace(/\n/g,"<br>")+"</div>"+
+      "<h3>Ausgeführte Arbeit</h3><div>"+escapeHtml(c.ag||"").replace(/\n/g,"<br>")+"</div>"+
+      "<h3>Stunden</h3><table><thead><tr><th>Monteur</th>"+head+"<th>Woche gesamt</th></tr></thead><tbody>"+rows+"</tbody></table>"+
+      "<h3>Materialverbrauch</h3><table><thead><tr><th>Material</th><th>Stückzahl</th><th>Bemerkung</th></tr></thead><tbody>"+mats+"</tbody></table>"+
+      "<div style='display:flex;gap:40px;margin-top:24px'>"+
+        "<div style='flex:1'><div>Ort, Datum: __________________</div><div class='signature'></div><div>Unterschrift Kunde</div></div>"+
+        "<div style='flex:1'><div>Ort, Datum: __________________</div><div class='signature'></div><div>Unterschrift Monteur</div></div>"+
+      "</div>"+
+      "<script>onload=function(){print()}</script></body></html>";
+
+    writePrint(html);
+  }
+
+  function printWeeklyAll(){
+    var grid = st.team.map(function(){return st.tage.map(function(){return 0;});});
+    var lines = [];
+    for(var k=0;k<st.k.length;k++){
+      var c = st.k[k];
+      for(var r=0;r<st.team.length;r++){
+        for(var d=0;d<st.tage.length;d++){
+          var h = parseFloat(c.h[r] ? (c.h[r][d]||0) : 0) || 0;
+          grid[r][d] += h;
+          if(h>0){
+            lines.push({
+              tag: st.tage[d],
+              kunde: c.n || "",
+              monteur: st.team[r],
+              stunden: h
+            });
+          }
+        }
+      }
+    }
+    var head = st.tage.map(function(t){return "<th>"+t+"</th>";}).join("");
+    var rows="";
+    for(var r=0;r<st.team.length;r++){
+      var w=0, cells="";
+      for(var d=0;d<st.tage.length;d++){
+        w += grid[r][d];
+        cells += "<td>"+grid[r][d].toFixed(2)+"</td>";
+      }
+      rows += "<tr><th style='text-align:left'>"+escapeHtml(st.team[r])+"</th>"+cells+"<td><b>"+w.toFixed(2)+"</b></td></tr>";
+    }
+    var lrows = lines.map(function(x){
+      return "<tr><td>"+x.tag+"</td><td>"+escapeHtml(x.kunde)+"</td><td>"+escapeHtml(x.monteur)+"</td><td>"+x.stunden.toFixed(2)+"</td></tr>";
+    }).join("");
+    if(!lrows) lrows = "<tr><td colspan='4' style='text-align:center;color:#666'>—</td></tr>";
+
+    var html = "<!doctype html><html><head><meta charset='utf-8'><title>Wochenbericht</title>"+
+      "<style>body{font:12px/1.4 system-ui,Segoe UI,Roboto,Arial;padding:18px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #777;padding:5px;text-align:center}@page{size:A4;margin:14mm}</style></head><body>"+
+      pdfHeader("Wochenbericht (alle Kunden)")+
+      "<div><b>KW:</b> "+escapeHtml(st.kw)+" &nbsp; <b>Zeitraum:</b> "+escapeHtml(st.zr)+"</div>"+
+      "<h3>Summen je Monteur / Tag</h3>"+
+      "<table><thead><tr><th>Monteur</th>"+head+"<th>Woche gesamt</th></tr></thead><tbody>"+rows+"</tbody></table>"+
+      "<h3 style='margin-top:14px'>Detail (Tag / Kunde / Monteur)</h3>"+
+      "<table><thead><tr><th>Tag</th><th>Kunde</th><th>Monteur</th><th>Stunden</th></tr></thead><tbody>"+lrows+"</tbody></table>"+
+      "<script>onload=function(){print()}</script></body></html>";
 
     writePrint(html);
   }
 
   function printMonteurWeekly(r){
-    var name = st.team[r] || ('Monteur '+(r+1));
-    var head = st.tage.map(function(t){return '<th>'+t+'</th>';}).join('');
-    var cells='', wsum=0;
-
-    for(var d=0; d<st.tage.length; d++){
+    var name = st.team[r] || ("Monteur "+(r+1));
+    var head = st.tage.map(function(t){return "<th>"+t+"</th>";}).join("");
+    var cells = "", wsum = 0;
+    var lines = [];
+    for(var d=0;d<st.tage.length;d++){
       var s=0;
-      for(var k=0; k<st.k.length; k++){
-        s += parseFloat(st.k[k].h[r] ? (st.k[k].h[r][d]||0) : 0) || 0;
+      for(var k=0;k<st.k.length;k++){
+        var c=st.k[k];
+        var h = parseFloat(c.h[r] ? (c.h[r][d]||0) : 0) || 0;
+        s += h;
+        if(h>0){
+          lines.push({tag:st.tage[d], kunde:c.n||"", stunden:h});
+        }
       }
       wsum += s;
-      cells += '<td>'+s.toFixed(2)+'</td>';
+      cells += "<td>"+s.toFixed(2)+"</td>";
     }
-
-    var row = '<tr><th style="text-align:left">'+escapeHtml(name)+'</th>'+cells+'<td><b>'+wsum.toFixed(2)+'</b></td></tr>';
-
-    var lines=[];
-    for(var k=0; k<st.k.length; k++){
-      var c=st.k[k];
-      for(var d=0; d<st.tage.length; d++){
-        var h=parseFloat(c.h[r] ? (c.h[r][d]||0) : 0) || 0;
-        if(h>0) lines.push({tag:st.tage[d], kunde:c.n||'', stunden:h});
-      }
-    }
+    var row = "<tr><th style='text-align:left'>"+escapeHtml(name)+"</th>"+cells+"<td><b>"+wsum.toFixed(2)+"</b></td></tr>";
     var lrows = lines.map(function(x){
-      return '<tr><td>'+x.tag+'</td><td>'+escapeHtml(x.kunde)+'</td><td>'+x.stunden.toFixed(2)+'</td></tr>';
-    }).join('');
-    if(!lrows) lrows = '<tr><td colspan="3" style="text-align:center;color:#666">—</td></tr>';
+      return "<tr><td>"+x.tag+"</td><td>"+escapeHtml(x.kunde)+"</td><td>"+x.stunden.toFixed(2)+"</td></tr>";
+    }).join("");
+    if(!lrows) lrows = "<tr><td colspan='3' style='text-align:center;color:#666'>—</td></tr>";
 
-    var html='<!doctype html><html><head><meta charset="utf-8"><title>Wochenbericht (Monteur)</title>'+
-      '<style>body{font:12px/1.4 system-ui,Segoe UI,Roboto,Arial;padding:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #777;padding:6px;text-align:center}@page{size:A4;margin:15mm}</style></head><body>'+
-      pdfHeader('Wochenbericht (Monteur) — '+escapeHtml(name))+
-      '<div style="margin-bottom:6px"><b>KW:</b> '+escapeHtml(st.kw)+' &nbsp; <b>Zeitraum:</b> '+escapeHtml(st.zr)+'</div>'+
-      '<h3>Summen je Tag</h3><table><thead><tr><th>Monteur</th>'+head+'<th>Woche gesamt</th></tr></thead><tbody>'+row+'</tbody></table>'+
-      '<h3 style="margin-top:16px">Kompakte Tagesliste</h3><table><thead><tr><th>Tag</th><th>Kunde</th><th>Stunden</th></tr></thead><tbody>'+lrows+'</tbody></table>'+
-      '<script>onload=function(){print()}</script></body></html>';
+    var html = "<!doctype html><html><head><meta charset='utf-8'><title>Wochenbericht Monteur</title>"+
+      "<style>body{font:12px/1.4 system-ui,Segoe UI,Roboto,Arial;padding:18px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #777;padding:5px;text-align:center}@page{size:A4;margin:14mm}</style></head><body>"+
+      pdfHeader("Wochenbericht (Monteur) — "+escapeHtml(name))+
+      "<div><b>KW:</b> "+escapeHtml(st.kw)+" &nbsp; <b>Zeitraum:</b> "+escapeHtml(st.zr)+"</div>"+
+      "<h3>Summen je Tag</h3>"+
+      "<table><thead><tr><th>Monteur</th>"+head+"<th>Woche gesamt</th></tr></thead><tbody>"+row+"</tbody></table>"+
+      "<h3 style='margin-top:14px'>Detail (Tag / Kunde)</h3>"+
+      "<table><thead><tr><th>Tag</th><th>Kunde</th><th>Stunden</th></tr></thead><tbody>"+lrows+"</tbody></table>"+
+      "<script>onload=function(){print()}</script></body></html>";
 
     writePrint(html);
   }
 
-  function printWeekly(){
-    var grid = st.team.map(function(){return st.tage.map(function(){return 0;});});
-    for(var k=0;k<st.k.length;k++){
-      for(var r=0;r<st.team.length;r++){
-        for(var d=0;d<st.tage.length;d++){
-          var v=parseFloat(st.k[k].h[r][d]||0)||0;
-          grid[r][d]+=v;
-        }
-      }
-    }
-    var head=st.tage.map(function(t){return '<th>'+t+'</th>';}).join('');
-    var rows='';
-    for(var r=0;r<st.team.length;r++){
-      var w=0,cells='';
-      for(var d=0;d<st.tage.length;d++){
-        w+=grid[r][d];
-        cells+='<td>'+grid[r][d].toFixed(2)+'</td>';
-      }
-      rows+='<tr><th style="text-align:left">'+escapeHtml(st.team[r])+'</th>'+cells+'<td><b>'+w.toFixed(2)+'</b></td></tr>';
-    }
-    var lines=[];
-    for(var k=0;k<st.k.length;k++){
-      for(var r=0;r<st.team.length;r++){
-        for(var d=0;d<st.tage.length;d++){
-          var h=parseFloat(st.k[k].h[r][d]||0)||0;
-          if(h>0) lines.push({tag:st.tage[d], kunde:st.k[k].n||'', monteur:st.team[r], stunden:h});
-        }
-      }
-    }
-    var lrows = lines.map(function(x){
-      return '<tr><td>'+x.tag+'</td><td>'+escapeHtml(x.kunde)+'</td><td>'+escapeHtml(x.monteur)+'</td><td>'+x.stunden.toFixed(2)+'</td></tr>';
-    }).join('');
-    if(!lrows) lrows='<tr><td colspan="4" style="text-align:center;color:#666">—</td></tr>';
-
-    var html='<!doctype html><html><head><meta charset="utf-8"><title>Wochenbericht</title>'+
-      '<style>body{font:12px/1.4 system-ui,Segoe UI,Roboto,Arial;padding:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #777;padding:6px;text-align:center}@page{size:A4;margin:15mm}</style></head><body>'+
-      pdfHeader('Wochenbericht (alle Kunden)')+
-      '<div style="margin-bottom:6px"><b>KW:</b> '+escapeHtml(st.kw)+' &nbsp; <b>Zeitraum:</b> '+escapeHtml(st.zr)+'</div>'+
-      '<h3>Summen je Monteur / Tag</h3><table><thead><tr><th>Monteur</th>'+head+'<th>Woche gesamt</th></tr></thead><tbody>'+rows+'</tbody></table>'+
-      '<h3 style="margin-top:16px">Kompakte Tagesliste</h3><table><thead><tr><th>Tag</th><th>Kunde</th><th>Monteur</th><th>Stunden</th></tr></thead><tbody>'+lrows+'</tbody></table>'+
-      '<script>onload=function(){print()}</script></body></html>';
-
-    writePrint(html);
-  }
-
-  function escapeHtml(s){
-    return (s||'').toString()
-      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-  }
-  function escapeAttr(s){
-    return (s||'').toString()
-      .replace(/&/g,"&amp;").replace(/"/g,"&quot;");
-  }
-
-  function forceTelInputs(){
-    document.querySelectorAll('td.hcell input').forEach(function(inp){
-      inp.setAttribute('type','tel');
-      inp.setAttribute('inputmode','decimal');
-      inp.setAttribute('autocomplete','off');
-      inp.setAttribute('autocapitalize','off');
-      inp.setAttribute('spellcheck','false');
-      inp.style.color='rgba(255,255,255,0.999)';
-      inp.style.webkitTextFillColor='#fff';
-      inp.style.backgroundColor='#0f1116';
-    });
-  }
-
-  // INIT
+  // ==== Init ====
   load();
   ensureAtLeastOneKunde();
+  fixShapes();
   render();
 
 })();
