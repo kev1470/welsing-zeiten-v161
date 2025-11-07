@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Welsing Zeiten – v1.6.5 Bugfix</title>
+<title>Welsing Zeiten – v1.6.5 Clean</title>
 <meta name="theme-color" content="#E2231A">
 <style>
   :root{
@@ -140,7 +140,7 @@
 <body>
 <header>
   <b>Welsing Zeiten</b>
-  <div class="ver">v1.6.5 – Bugfix</div>
+  <div class="ver">v1.6.5 clean</div>
 </header>
 
 <div class="wrap">
@@ -158,7 +158,7 @@
     <div class="grid cols2">
       <div>
         <label>Monteur-Team (Komma)</label>
-        <input id="team" type="text" placeholder="z. B. Kevin, Jacub, Mario, Martin, Tomas">
+        <input id="team" type="text" placeholder="Kevin, Jacub, Mario, Martin, Tomas">
       </div>
       <div>
         <label>Sonntag</label>
@@ -191,6 +191,7 @@
 
 <script>
 (function(){
+  // Zustand
   var st = {
     kw:"",
     zr:"",
@@ -202,7 +203,7 @@
   var lastSel = 0;
   var delegatesAttached = false;
 
-  // Nur löschen, wenn URL bewusst ?wipe=1 enthält
+  // Nur löschen, wenn bewusst ?wipe=1
   try{
     var usp = new URLSearchParams(location.search);
     if (usp.get('wipe') === '1'){
@@ -250,13 +251,16 @@
     ensureAtLeastOneKunde();
     for(var i=0;i<st.k.length;i++){
       var c = st.k[i];
+
       if(!Array.isArray(c.h)) c.h = [];
+      // Zeilen = Monteure
       while(c.h.length < st.team.length){
         c.h.push(st.tage.map(function(){return ""}));
       }
       while(c.h.length > st.team.length){
         c.h.pop();
       }
+      // Spalten = Tage
       for(var r=0;r<c.h.length;r++){
         if(!Array.isArray(c.h[r])) c.h[r] = [];
         while(c.h[r].length < st.tage.length){
@@ -266,6 +270,8 @@
           c.h[r].pop();
         }
       }
+
+      // Material
       if(!Array.isArray(c.m) || c.m.length===0){
         c.m = [{b:"",s:"",r:""}];
       }
@@ -407,7 +413,7 @@
     var rows = "";
     for(var r=0;r<st.team.length;r++){
       rows += '<tr data-r="'+r+'"><th style="text-align:left">'+escapeHtml(st.team[r])+'</th>';
-      for(var d=0;d<st.tage.length;d++){
+      for(var d=0; d<st.tage.length; d++){
         var v = (c.h && c.h[r] && c.h[r][d]) || "";
         rows += '<td class="hcell"><input type="tel" inputmode="decimal" placeholder="0" value="'+escapeAttr(v)+'" data-i="'+i+'" data-r="'+r+'" data-d="'+d+'"></td>';
       }
@@ -415,7 +421,7 @@
     }
 
     var mats = "";
-    for(var m=0;m<c.m.length;m++){
+    for(var m=0; m<c.m.length; m++){
       var it = c.m[m];
       mats += '<tr>'+
         '<td><input type="text" value="'+escapeAttr(it.b)+'" data-i="'+i+'" data-m="'+m+'" data-f="b"></td>'+
@@ -489,6 +495,7 @@
     if(delegatesAttached) return;
     delegatesAttached = true;
 
+    // Kopf
     document.getElementById('kw').addEventListener('input', function(){
       st.kw = this.value; save();
     });
@@ -503,13 +510,13 @@
     teamInput.addEventListener('input', applyTeam);
     teamInput.addEventListener('change', applyTeam);
 
+    // Buttons oben
     document.getElementById('btnWeeklyAll').addEventListener('click', printWeekly);
     document.getElementById('btnWeeklyMonteur').addEventListener('click', function(){
       var sel = document.getElementById('selMonteur');
       var r = parseInt(sel.value||"0",10)||0;
       printMonteurWeekly(r);
     });
-
     document.getElementById('btnWipe').addEventListener('click', function(){
       if(confirm("Alle Daten dieser Woche löschen?")){
         try{ localStorage.removeItem(KEY); }catch(e){}
@@ -517,26 +524,33 @@
       }
     });
 
+    // Kundensteuerung
     document.getElementById('btnAddK').addEventListener('click', addKunde);
     document.getElementById('btnRemK').addEventListener('click', remKunde);
-    document.getElementById('sel').addEventListener('change', function(){ setSel(this.value); });
+    document.getElementById('sel').addEventListener('change', function(){
+      setSel(this.value);
+    });
     document.getElementById('btnScroll').addEventListener('click', scrollSel);
 
+    // Delegation im Kundenbereich
     var kc = document.getElementById('kunden');
 
     kc.addEventListener('input', function(e){
       var t = e.target;
 
+      // Stunden
       if(t.matches('td.hcell input')){
         setH(+t.dataset.i, +t.dataset.r, +t.dataset.d, t.value);
         return;
       }
 
+      // Felder Kunde
       if(t.matches('[data-action="setF"]')){
         setF(+t.dataset.i, t.dataset.f, t.value);
         return;
       }
 
+      // Material-Felder
       if(t.matches('input[data-f], textarea[data-f]') && t.dataset.m !== undefined){
         setM(+t.dataset.i, +t.dataset.m, t.dataset.f, t.value);
         return;
@@ -549,9 +563,13 @@
       var act = b.dataset.action;
       var i = +b.dataset.i;
 
-      if (act === 'addM') addM(i);
-      else if (act === 'delM') delM(i, +b.dataset.m);
-      else if (act === 'printK') printK(i);
+      if(act === 'addM'){
+        addM(i);
+      }else if(act === 'delM'){
+        delM(i, +b.dataset.m);
+      }else if(act === 'printK'){
+        printK(i);
+      }
     });
 
     // Autosave
@@ -563,17 +581,21 @@
     }, 3000);
   }
 
+  // PDF Helfer
   function pdfHeader(title){
     return '<div style="margin-bottom:4px;font-weight:700">'+title+'</div>';
   }
 
   function writePrint(html){
     var fr = document.getElementById('printFrame');
-    var doc = fr.contentWindow || fr.contentDocument;
-    if(doc.document) doc = doc.document;
-    doc.open(); doc.write(html); doc.close();
+    var win = fr.contentWindow || fr;
+    var doc = win.document;
+    doc.open();
+    doc.write(html);
+    doc.close();
   }
 
+  // Einzel-Kundenbericht
   function printK(i){
     var c = st.k[i];
     var head = st.tage.map(function(t){return '<th>'+t+'</th>';}).join('');
@@ -587,6 +609,7 @@
       }
       rows += '<tr><th style="text-align:left">'+escapeHtml(st.team[r])+'</th>'+cells+'<td><b>'+sum.toFixed(2)+'</b></td></tr>';
     }
+
     var html='<!doctype html><html><head><meta charset="utf-8"><title>Arbeitsbericht</title>'+
       '<style>body{font:12px/1.4 system-ui,Segoe UI,Roboto,Arial;padding:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #777;padding:6px;text-align:center}@page{size:A4;margin:15mm}</style></head><body>'+
       pdfHeader('Arbeitsbericht')+
@@ -595,21 +618,26 @@
       '<h3>Ausgeführte Arbeit</h3><div>'+escapeHtml(c.ag||"").replace(/\n/g,"<br>")+'</div>'+
       '<h3>Stunden</h3><table><thead><tr><th>Monteur</th>'+head+'<th>Woche gesamt</th></tr></thead><tbody>'+rows+'</tbody></table>'+
       '<script>onload=function(){print()}</script></body></html>';
+
     writePrint(html);
   }
 
+  // Wochenbericht alle Monteure / Kunden
   function printWeekly(){
     var grid = st.team.map(function(){
       return st.tage.map(function(){ return 0; });
     });
+
     for(var k=0;k<st.k.length;k++){
+      var c = st.k[k];
       for(var r=0;r<st.team.length;r++){
         for(var d=0; d<st.tage.length; d++){
-          var v = parseFloat(st.k[k].h[r][d]||0) || 0;
+          var v = parseFloat(c.h[r][d]||0) || 0;
           grid[r][d] += v;
         }
       }
     }
+
     var head = st.tage.map(function(t){return '<th>'+t+'</th>';}).join('');
     var rows='';
     for(var r=0;r<st.team.length;r++){
@@ -620,34 +648,42 @@
       }
       rows += '<tr><th style="text-align:left">'+escapeHtml(st.team[r])+'</th>'+cells+'<td><b>'+w.toFixed(2)+'</b></td></tr>';
     }
+
     var html='<!doctype html><html><head><meta charset="utf-8"><title>Wochenbericht</title>'+
       '<style>body{font:12px/1.4 system-ui,Segoe UI,Roboto,Arial;padding:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #777;padding:6px;text-align:center}@page{size:A4;margin:15mm}</style></head><body>'+
       pdfHeader('Wochenbericht (alle Kunden)')+
       '<div style="margin-bottom:6px"><b>KW:</b> '+escapeHtml(st.kw)+' &nbsp; <b>Zeitraum:</b> '+escapeHtml(st.zr)+'</div>'+
       '<h3>Summen je Monteur / Tag</h3><table><thead><tr><th>Monteur</th>'+head+'<th>Woche gesamt</th></tr></thead><tbody>'+rows+'</tbody></table>'+
       '<script>onload=function(){print()}</script></body></html>';
+
     writePrint(html);
   }
 
+  // Wochenbericht einzelner Monteur
   function printMonteurWeekly(r){
     var name = st.team[r] || ('Monteur '+(r+1));
     var head = st.tage.map(function(t){return '<th>'+t+'</th>';}).join('');
     var cells='', wsum=0;
+
     for(var d=0; d<st.tage.length; d++){
       var s=0;
       for(var k=0; k<st.k.length; k++){
-        s += parseFloat(st.k[k].h[r] ? (st.k[k].h[r][d]||0) : 0) || 0;
+        var c = st.k[k];
+        s += parseFloat(c.h[r] ? (c.h[r][d]||0) : 0) || 0;
       }
       wsum += s;
       cells += '<td>'+s.toFixed(2)+'</td>';
     }
+
     var row = '<tr><th style="text-align:left">'+escapeHtml(name)+'</th>'+cells+'<td><b>'+wsum.toFixed(2)+'</b></td></tr>';
+
     var html='<!doctype html><html><head><meta charset="utf-8"><title>Wochenbericht (Monteur)</title>'+
       '<style>body{font:12px/1.4 system-ui,Segoe UI,Roboto,Arial;padding:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #777;padding:6px;text-align:center}@page{size:A4;margin:15mm}</style></head><body>'+
       pdfHeader('Wochenbericht (Monteur) — '+escapeHtml(name))+
       '<div style="margin-bottom:6px"><b>KW:</b> '+escapeHtml(st.kw)+' &nbsp; <b>Zeitraum:</b> '+escapeHtml(st.zr)+'</div>'+
       '<table><thead><tr><th>Monteur</th>'+head+'<th>Woche gesamt</th></tr></thead><tbody>'+row+'</tbody></table>'+
       '<script>onload=function(){print()}</script></body></html>';
+
     writePrint(html);
   }
 
