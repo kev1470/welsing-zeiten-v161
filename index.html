@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Welsing Zeiten – v1.6.5 Clean</title>
+<title>Welsing Zeiten – v1.6.5 clean</title>
 <meta name="theme-color" content="#E2231A">
 <style>
   :root{
@@ -191,7 +191,6 @@
 
 <script>
 (function(){
-  // Zustand
   var st = {
     kw:"",
     zr:"",
@@ -203,7 +202,7 @@
   var lastSel = 0;
   var delegatesAttached = false;
 
-  // Nur löschen, wenn bewusst ?wipe=1
+  // Nur wenn ?wipe=1 -> Daten löschen
   try{
     var usp = new URLSearchParams(location.search);
     if (usp.get('wipe') === '1'){
@@ -253,14 +252,12 @@
       var c = st.k[i];
 
       if(!Array.isArray(c.h)) c.h = [];
-      // Zeilen = Monteure
       while(c.h.length < st.team.length){
         c.h.push(st.tage.map(function(){return ""}));
       }
       while(c.h.length > st.team.length){
         c.h.pop();
       }
-      // Spalten = Tage
       for(var r=0;r<c.h.length;r++){
         if(!Array.isArray(c.h[r])) c.h[r] = [];
         while(c.h[r].length < st.tage.length){
@@ -271,7 +268,6 @@
         }
       }
 
-      // Material
       if(!Array.isArray(c.m) || c.m.length===0){
         c.m = [{b:"",s:"",r:""}];
       }
@@ -453,7 +449,7 @@
           '<table><thead><tr><th>Monteur</th>'+
             st.tage.map(function(t){return '<th>'+t+'</th>';}).join('')+
             '<th>Woche gesamt</th></tr></thead><tbody>'+rows+'</tbody></table>'+
-        '</div>'+
+        </div>'+
         '<div style="margin-top:8px">'+
           '<b>Materialverbrauch</b> '+
           '<button class="btn secondary" data-action="addM" data-i="'+i+'">+ Material</button>'+
@@ -495,7 +491,6 @@
     if(delegatesAttached) return;
     delegatesAttached = true;
 
-    // Kopf
     document.getElementById('kw').addEventListener('input', function(){
       st.kw = this.value; save();
     });
@@ -510,13 +505,13 @@
     teamInput.addEventListener('input', applyTeam);
     teamInput.addEventListener('change', applyTeam);
 
-    // Buttons oben
     document.getElementById('btnWeeklyAll').addEventListener('click', printWeekly);
     document.getElementById('btnWeeklyMonteur').addEventListener('click', function(){
       var sel = document.getElementById('selMonteur');
       var r = parseInt(sel.value||"0",10)||0;
       printMonteurWeekly(r);
     });
+
     document.getElementById('btnWipe').addEventListener('click', function(){
       if(confirm("Alle Daten dieser Woche löschen?")){
         try{ localStorage.removeItem(KEY); }catch(e){}
@@ -524,7 +519,6 @@
       }
     });
 
-    // Kundensteuerung
     document.getElementById('btnAddK').addEventListener('click', addKunde);
     document.getElementById('btnRemK').addEventListener('click', remKunde);
     document.getElementById('sel').addEventListener('change', function(){
@@ -532,25 +526,21 @@
     });
     document.getElementById('btnScroll').addEventListener('click', scrollSel);
 
-    // Delegation im Kundenbereich
     var kc = document.getElementById('kunden');
 
     kc.addEventListener('input', function(e){
       var t = e.target;
 
-      // Stunden
       if(t.matches('td.hcell input')){
         setH(+t.dataset.i, +t.dataset.r, +t.dataset.d, t.value);
         return;
       }
 
-      // Felder Kunde
       if(t.matches('[data-action="setF"]')){
         setF(+t.dataset.i, t.dataset.f, t.value);
         return;
       }
 
-      // Material-Felder
       if(t.matches('input[data-f], textarea[data-f]') && t.dataset.m !== undefined){
         setM(+t.dataset.i, +t.dataset.m, t.dataset.f, t.value);
         return;
@@ -572,7 +562,6 @@
       }
     });
 
-    // Autosave
     window.addEventListener('beforeunload', function(){
       try{ save(); }catch(e){}
     });
@@ -581,7 +570,6 @@
     }, 3000);
   }
 
-  // PDF Helfer
   function pdfHeader(title){
     return '<div style="margin-bottom:4px;font-weight:700">'+title+'</div>';
   }
@@ -595,7 +583,6 @@
     doc.close();
   }
 
-  // Einzel-Kundenbericht
   function printK(i){
     var c = st.k[i];
     var head = st.tage.map(function(t){return '<th>'+t+'</th>';}).join('');
@@ -622,7 +609,6 @@
     writePrint(html);
   }
 
-  // Wochenbericht alle Monteure / Kunden
   function printWeekly(){
     var grid = st.team.map(function(){
       return st.tage.map(function(){ return 0; });
@@ -659,7 +645,6 @@
     writePrint(html);
   }
 
-  // Wochenbericht einzelner Monteur
   function printMonteurWeekly(r){
     var name = st.team[r] || ('Monteur '+(r+1));
     var head = st.tage.map(function(t){return '<th>'+t+'</th>';}).join('');
