@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Welsing Zeiten – v1.6.5 kompakt + Monteur (stabil)</title>
+  <title>Welsing Zeiten – v1.6.5 kompakt + Monteur (Material Fix)</title>
   <meta name="theme-color" content="#E2231A">
   <style>
     :root{
@@ -142,7 +142,7 @@
 <body>
 <header>
   <b>Welsing Zeiten</b>
-  <div class="ver">v1.6.5 kompakt + Monteur</div>
+  <div class="ver">v1.6.5 kompakt + Monteur (Material Fix)</div>
 </header>
 
 <div class="wrap">
@@ -206,7 +206,7 @@
   let lastSel = 0;
   let delegatesAttached = false;
 
-  // Bei ?wipe=1 alles löschen
+  // Nur bei ?wipe=1 alles löschen
   try {
     const usp = new URLSearchParams(location.search);
     if (usp.get("wipe") === "1") {
@@ -214,6 +214,7 @@
     }
   } catch(e){}
 
+  // Helpers
   function escapeHtml(s){
     return (s || "").toString()
       .replace(/&/g,"&amp;")
@@ -225,13 +226,11 @@
       .replace(/&/g,"&amp;")
       .replace(/"/g,"&quot;");
   }
-
   function save(){
     try { localStorage.setItem(KEY, JSON.stringify(st)); } catch(e){}
   }
-
   function load(){
-    try {
+    try{
       const raw = localStorage.getItem(KEY);
       if(!raw) return;
       const o = JSON.parse(raw) || {};
@@ -240,9 +239,10 @@
       if(Array.isArray(o.tage) && o.tage.length) st.tage = o.tage;
       if(Array.isArray(o.team) && o.team.length) st.team = o.team;
       if(Array.isArray(o.k) && o.k.length) st.k = o.k;
-    } catch(e){}
+    }catch(e){}
   }
 
+  // Kunden-Struktur
   function newK(){
     return {
       n: "",
@@ -253,13 +253,11 @@
       m: [{b:"",s:"",r:""}]
     };
   }
-
   function ensureAtLeastOneKunde(){
     if(!Array.isArray(st.k) || st.k.length === 0){
       st.k = [newK()];
     }
   }
-
   function fixShapes(){
     ensureAtLeastOneKunde();
     st.k.forEach(k => {
@@ -270,7 +268,7 @@
       while(k.h.length > st.team.length){
         k.h.pop();
       }
-      for(let r=0; r<k.h.length; r++){
+      for(let r=0;r<k.h.length;r++){
         if(!Array.isArray(k.h[r])) k.h[r] = [];
         while(k.h[r].length < st.tage.length){
           k.h[r].push("");
@@ -285,36 +283,33 @@
     });
   }
 
+  // Basis-Operationen
   function addKunde(){
     st.k.push(newK());
     render();
     setSel(st.k.length - 1);
     save();
   }
-
   function remKunde(){
     if(st.k.length <= 1){
       alert("Mindestens 1 Kunde nötig.");
       return;
     }
-    st.k.splice(lastSel, 1);
-    if(lastSel >= st.k.length) lastSel = st.k.length - 1;
+    st.k.splice(lastSel,1);
+    if(lastSel >= st.k.length) lastSel = st.k.length-1;
     render();
     setSel(lastSel);
     save();
   }
-
   function setSel(v){
-    lastSel = parseInt(v || "0", 10) || 0;
+    lastSel = parseInt(v || "0",10) || 0;
     const sel = document.getElementById("sel");
     if(sel) sel.value = String(lastSel);
   }
-
   function scrollSel(){
     const el = document.getElementById("k"+lastSel);
     if(el) el.scrollIntoView({behavior:"smooth"});
   }
-
   function toggleSun(v){
     if(v === "1"){
       if(!st.tage.includes("So")) st.tage.push("So");
@@ -325,7 +320,6 @@
     render();
     save();
   }
-
   function applyTeam(){
     const raw = document.getElementById("team").value;
     const arr = raw.split(",").map(s => s.trim()).filter(Boolean);
@@ -336,16 +330,14 @@
       save();
     }
   }
-
   function sanitizeDec(s){
     s = (s || "").toString().replace(/,/g,".").replace(/[^0-9.]/g,"");
     const p = s.indexOf(".");
-    if(p >= 0){
+    if(p>=0){
       s = s.slice(0,p+1) + s.slice(p+1).replace(/\./g,"");
     }
     return s;
   }
-
   function setH(i,r,d,v){
     v = sanitizeDec(v);
     const k = st.k[i];
@@ -355,7 +347,6 @@
       renderRowSum(i,r);
     }
   }
-
   function setF(i,f,v){
     const k = st.k[i];
     if(k){
@@ -363,7 +354,6 @@
       save();
     }
   }
-
   function addM(i){
     const k = st.k[i];
     if(k){
@@ -372,7 +362,6 @@
       render();
     }
   }
-
   function delM(i,m){
     const k = st.k[i];
     if(k && k.m && k.m[m] != null){
@@ -382,7 +371,6 @@
       render();
     }
   }
-
   function setM(i,m,f,v){
     const k = st.k[i];
     if(k && k.m && k.m[m]){
@@ -391,10 +379,11 @@
     }
   }
 
+  // Summen
   function renderRowSum(i,r){
     const card = document.getElementById("k"+i);
     if(!card) return;
-    const tr = card.querySelector(`tr[data-r="${r}"]`);
+    const tr = card.querySelector('tr[data-r="'+r+'"]');
     if(!tr) return;
     const inputs = tr.querySelectorAll("td.hcell input");
     let sum = 0;
@@ -404,116 +393,94 @@
       if(!isNaN(n)) sum += n;
     });
     const last = tr.querySelector("td.sum-cell");
-    if(last) last.innerHTML = `<b>${sum.toFixed(2)}</b>`;
+    if(last) last.innerHTML = "<b>"+sum.toFixed(2)+"</b>";
   }
 
+  // Karten HTML
   function cardHTML(i){
     const c = st.k[i];
 
-    // Stunden-Zeilen
+    // Stunden
     let rows = "";
-    for(let r=0; r<st.team.length; r++){
-      rows += `<tr data-r="${r}"><th style="text-align:left">${escapeHtml(st.team[r])}</th>`;
+    for(let r=0;r<st.team.length;r++){
+      rows += '<tr data-r="'+r+'"><th style="text-align:left">'+escapeHtml(st.team[r])+'</th>';
       for(let d=0; d<st.tage.length; d++){
         const v = (c.h && c.h[r] && c.h[r][d]) || "";
-        rows += `<td class="hcell"><input type="tel" inputmode="decimal" placeholder="0"
-                  value="${escapeAttr(v)}"
-                  data-i="${i}" data-r="${r}" data-d="${d}"></td>`;
+        rows += '<td class="hcell"><input type="tel" inputmode="decimal" placeholder="0" '+
+                'value="'+escapeAttr(v)+'" data-i="'+i+'" data-r="'+r+'" data-d="'+d+'"></td>';
       }
-      rows += `<td class="sum-cell"><b>0.00</b></td></tr>`;
+      rows += '<td class="sum-cell"><b>0.00</b></td></tr>';
     }
 
     // Material
     let mats = "";
     c.m.forEach((m,idx) => {
-      mats += `<tr>
-        <td><input type="text" value="${escapeAttr(m.b)}" data-i="${i}" data-m="${idx}" data-f="b"></td>
-        <td><input type="text" value="${escapeAttr(m.s)}" data-i="${i}" data-m="${idx}" data-f="s"></td>
-        <td><input type="text" value="${escapeAttr(m.r)}" data-i="${i}" data-m="${idx}" data-f="r"></td>
-        <td><button class="btn secondary" data-action="delM" data-i="${i}" data-m="${idx}">−</button></td>
-      </tr>`;
+      mats += '<tr>'+
+        '<td><input type="text" value="'+escapeAttr(m.b)+'" data-i="'+i+'" data-m="'+idx+'" data-f="b"></td>'+
+        '<td><input type="text" value="'+escapeAttr(m.s)+'" data-i="'+i+'" data-m="'+idx+'" data-f="s"></td>'+
+        '<td><input type="text" value="'+escapeAttr(m.r)+'" data-i="'+i+'" data-m="'+idx+'" data-f="r"></td>'+
+        '<td><button class="btn secondary" data-action="delM" data-i="'+i+'" data-m="'+idx+'">−</button></td>'+
+      '</tr>';
     });
     if(!mats){
-      mats = `<tr><td colspan="4" style="text-align:center;color:#666">—</td></tr>`;
+      mats = '<tr><td colspan="4" style="text-align:center;color:#666">—</td></tr>';
     }
 
-    return `
-      <div class="card" id="k${i}">
-        <div class="row">
-          <span class="pill">Kunde ${String(i+1).padStart(2,"0")}</span>
-          <button class="btn" data-action="printK" data-i="${i}" style="margin-left:auto">PDF Arbeitsbericht</button>
-        </div>
-        <div class="grid cols2" style="margin-top:4px">
-          <div><label>Name</label>
-            <input type="text" value="${escapeAttr(c.n)}" data-action="setF" data-i="${i}" data-f="n">
-          </div>
-          <div><label>Adresse</label>
-            <input type="text" value="${escapeAttr(c.a)}" data-action="setF" data-i="${i}" data-f="a">
-          </div>
-        </div>
-        <div class="grid cols2" style="margin-top:4px">
-          <div><label>Auszuführende Arbeit</label>
-            <textarea data-action="setF" data-i="${i}" data-f="az">${escapeHtml(c.az)}</textarea>
-          </div>
-          <div><label>Ausgeführte Arbeit</label>
-            <textarea data-action="setF" data-i="${i}" data-f="ag">${escapeHtml(c.ag)}</textarea>
-          </div>
-        </div>
-        <div style="margin-top:6px">
-          <b>Stunden</b>
-          <table>
-            <thead>
-              <tr>
-                <th>M.</th>
-                ${st.tage.map(t => `<th>${t}</th>`).join("")}
-                <th>Summe</th>
-              </tr>
-            </thead>
-            <tbody>${rows}</tbody>
-          </table>
-        </div>
-        <div style="margin-top:6px">
-          <b>Material</b>
-          <button class="btn secondary" data-action="addM" data-i="${i}">+ Pos.</button>
-          <table style="margin-top:4px">
-            <thead>
-              <tr><th>Bezeichnung</th><th>Menge</th><th>Bemerkung</th><th></th></tr>
-            </thead>
-            <tbody>${mats}</tbody>
-          </table>
-        </div>
-      </div>`;
+    return ''
+      + '<div class="card" id="k'+i+'">'
+        + '<div class="row">'
+          + '<span class="pill">Kunde '+String(i+1).padStart(2,"0")+'</span>'
+          + '<button class="btn" data-action="printK" data-i="'+i+'" style="margin-left:auto">PDF Arbeitsbericht</button>'
+        + '</div>'
+        + '<div class="grid cols2" style="margin-top:4px">'
+          + '<div><label>Name</label><input type="text" value="'+escapeAttr(c.n)+'" data-action="setF" data-i="'+i+'" data-f="n"></div>'
+          + '<div><label>Adresse</label><input type="text" value="'+escapeAttr(c.a)+'" data-action="setF" data-i="'+i+'" data-f="a"></div>'
+        + '</div>'
+        + '<div class="grid cols2" style="margin-top:4px">'
+          + '<div><label>Auszuführende Arbeit</label><textarea data-action="setF" data-i="'+i+'" data-f="az">'+escapeHtml(c.az)+'</textarea></div>'
+          + '<div><label>Ausgeführte Arbeit</label><textarea data-action="setF" data-i="'+i+'" data-f="ag">'+escapeHtml(c.ag)+'</textarea></div>'
+        + '</div>'
+        + '<div style="margin-top:6px">'
+          + '<b>Stunden</b>'
+          + '<table><thead><tr><th>M.</th>'
+            + st.tage.map(t => '<th>'+t+'</th>').join('')
+            + '<th>Summe</th></tr></thead>'
+            + '<tbody>'+rows+'</tbody>'
+          + '</table>'
+        + '</div>'
+        + '<div style="margin-top:6px">'
+          + '<b>Material</b> '
+          + '<button class="btn secondary" data-action="addM" data-i="'+i+'">+ Pos.</button>'
+          + '<table style="margin-top:4px"><thead><tr><th>Bezeichnung</th><th>Menge</th><th>Bemerkung</th><th></th></tr></thead>'
+            + '<tbody>'+mats+'</tbody>'
+          + '</table>'
+        + '</div>'
+      + '</div>';
   }
 
+  // Render
   function render(){
     fixShapes();
 
-    // Kopf
     document.getElementById("kw").value = st.kw;
     document.getElementById("zr").value = st.zr;
     document.getElementById("sun").value = st.tage.includes("So") ? "1" : "0";
     document.getElementById("team").value = st.team.join(", ");
 
-    // Monteur-Auswahl
-    const selMonteur = document.getElementById("selMonteur");
-    selMonteur.innerHTML = st.team
-      .map((n,idx) => `<option value="${idx}">${escapeHtml(n)}</option>`)
-      .join("");
+    document.getElementById("selMonteur").innerHTML =
+      st.team.map((n,i) => '<option value="'+i+'">'+escapeHtml(n)+'</option>').join('');
 
-    // Kunden-Auswahl
-    const sel = document.getElementById("sel");
-    sel.innerHTML = st.k.map((k,i) =>
-      `<option value="${i}">${String(i+1).padStart(2,"0")} — ${escapeHtml(k.n || "Kunde")}</option>`
-    ).join("") || `<option value="0">01 — Kunde</option>`;
+    document.getElementById("sel").innerHTML =
+      st.k.map((k,i) => '<option value="'+i+'">'+String(i+1).padStart(2,"0")+' — '+escapeHtml(k.n || "Kunde")+'</option>').join('');
 
-    // Kundenkarten
-    const kundenDiv = document.getElementById("kunden");
-    kundenDiv.innerHTML = st.k.map((_,i) => cardHTML(i)).join("");
+    document.getElementById("kunden").innerHTML =
+      st.k.map((_,i) => cardHTML(i)).join('');
 
     attachDelegatesOnce();
     setTimeout(computeAllVisibleSums,0);
   }
 
+  // Events – nur EINMAL, mit Delegation für Material
   function attachDelegatesOnce(){
     if(delegatesAttached) return;
     delegatesAttached = true;
@@ -530,7 +497,7 @@
     document.getElementById("btnWeeklyAll").addEventListener("click", printWeekly);
     document.getElementById("btnWeeklyMonteur").addEventListener("click", () => {
       const sel = document.getElementById("selMonteur");
-      const r = parseInt(sel.value || "0", 10) || 0;
+      const r = parseInt(sel.value || "0",10) || 0;
       printMonteurWeekly(r);
     });
     document.getElementById("btnWipe").addEventListener("click", () => {
@@ -546,7 +513,7 @@
     document.getElementById("sel").addEventListener("change", e => setSel(e.target.value));
     document.getElementById("btnScroll").addEventListener("click", scrollSel);
 
-    // Delegation im Kundenbereich
+    // Delegation im Kundenbereich (FIx: keine mehrfachen Listener mehr!)
     const kc = document.getElementById("kunden");
 
     kc.addEventListener("input", e => {
@@ -570,9 +537,13 @@
       if(!b) return;
       const act = b.dataset.action;
       const i = +b.dataset.i;
-      if(act === "addM") addM(i);
-      else if(act === "delM") delM(i, +b.dataset.m);
-      else if(act === "printK") printK(i);
+      if(act === "addM"){
+        addM(i);
+      }else if(act === "delM"){
+        delM(i, +b.dataset.m);
+      }else if(act === "printK"){
+        printK(i);
+      }
     });
 
     // Autosave
@@ -580,11 +551,10 @@
     setInterval(() => { try{ save(); }catch(e){} }, 3000);
   }
 
-  // --- PDF Hilfsfunktionen ---
+  // PDF Helfer
   function pdfHeader(title){
-    return `<div style="margin-bottom:4px;font-weight:700">${title}</div>`;
+    return '<div style="margin-bottom:4px;font-weight:700">'+title+'</div>';
   }
-
   function writePrint(html){
     const fr = document.getElementById("printFrame");
     const win = fr.contentWindow || fr;
@@ -596,7 +566,7 @@
 
   function printK(i){
     const c = st.k[i];
-    const head = st.tage.map(t => `<th>${t}</th>`).join("");
+    const head = st.tage.map(t => '<th>'+t+'</th>').join('');
     let rows = "";
     st.team.forEach((name,r) => {
       let sum = 0;
@@ -604,32 +574,20 @@
       st.tage.forEach((_,d) => {
         const n = parseFloat(c.h[r]?.[d] || 0) || 0;
         sum += n;
-        cells += `<td>${n.toFixed(2)}</td>`;
+        cells += '<td>'+n.toFixed(2)+'</td>';
       });
-      rows += `<tr><th style="text-align:left">${escapeHtml(name)}</th>${cells}<td><b>${sum.toFixed(2)}</b></td></tr>`;
+      rows += '<tr><th style="text-align:left">'+escapeHtml(name)+'</th>'+cells+'<td><b>'+sum.toFixed(2)+'</b></td></tr>';
     });
 
-    const html = `<!doctype html><html><head><meta charset="utf-8">
-      <title>Arbeitsbericht</title>
-      <style>
-        body{font:11px/1.4 system-ui,Segoe UI,Roboto,Arial;padding:18px}
-        table{border-collapse:collapse;width:100%}
-        th,td{border:1px solid #777;padding:4px;text-align:center}
-        h3{margin:8px 0 4px}
-        @page{size:A4;margin:12mm}
-      </style></head><body>
-      ${pdfHeader("Arbeitsbericht")}
-      <div><b>KW:</b> ${escapeHtml(st.kw)} &nbsp; <b>Zeitraum:</b> ${escapeHtml(st.zr)}</div>
-      <div><b>Kunde:</b> ${escapeHtml(c.n||"")} &nbsp; <b>Adresse:</b> ${escapeHtml(c.a||"")}</div>
-      <h3>Ausgeführte Arbeit</h3>
-      <div>${escapeHtml(c.ag||"").replace(/\n/g,"<br>")}</div>
-      <h3>Stunden</h3>
-      <table>
-        <thead><tr><th>Monteur</th>${head}<th>Woche gesamt</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-      <script>onload=function(){print()}</script>
-      </body></html>`;
+    const html = '<!doctype html><html><head><meta charset="utf-8"><title>Arbeitsbericht</title>'+
+      '<style>body{font:11px/1.4 system-ui,Segoe UI,Roboto,Arial;padding:18px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #777;padding:4px;text-align:center}h3{margin:8px 0 4px}@page{size:A4;margin:12mm}</style></head><body>'+
+      pdfHeader('Arbeitsbericht')+
+      '<div><b>KW:</b> '+escapeHtml(st.kw)+' &nbsp; <b>Zeitraum:</b> '+escapeHtml(st.zr)+'</div>'+
+      '<div><b>Kunde:</b> '+escapeHtml(c.n||"")+' &nbsp; <b>Adresse:</b> '+escapeHtml(c.a||"")+'</div>'+
+      '<h3>Ausgeführte Arbeit</h3><div>'+escapeHtml(c.ag||"").replace(/\n/g,"<br>")+'</div>'+
+      '<h3>Stunden</h3><table><thead><tr><th>Monteur</th>'+head+'<th>Woche gesamt</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+      '<script>onload=function(){print()}</script></body></html>';
+
     writePrint(html);
   }
 
@@ -644,7 +602,7 @@
       });
     });
 
-    const head = st.tage.map(t => `<th>${t}</th>`).join("");
+    const head = st.tage.map(t => '<th>'+t+'</th>').join('');
     let rows = "";
     st.team.forEach((name,r) => {
       let w = 0;
@@ -652,66 +610,44 @@
       st.tage.forEach((_,d) => {
         const v = grid[r][d];
         w += v;
-        cells += `<td>${v.toFixed(2)}</td>`;
+        cells += '<td>'+v.toFixed(2)+'</td>';
       });
-      rows += `<tr><th style="text-align:left">${escapeHtml(name)}</th>${cells}<td><b>${w.toFixed(2)}</b></td></tr>`;
+      rows += '<tr><th style="text-align:left">'+escapeHtml(name)+'</th>'+cells+'<td><b>'+w.toFixed(2)+'</b></td></tr>';
     });
 
-    const html = `<!doctype html><html><head><meta charset="utf-8">
-      <title>Wochenbericht</title>
-      <style>
-        body{font:11px/1.4 system-ui,Segoe UI,Roboto,Arial;padding:18px}
-        table{border-collapse:collapse;width:100%}
-        th,td{border:1px solid #777;padding:4px;text-align:center}
-        h3{margin:8px 0 4px}
-        @page{size:A4;margin:12mm}
-      </style></head><body>
-      ${pdfHeader("Wochenbericht (alle Kunden)")}
-      <div><b>KW:</b> ${escapeHtml(st.kw)} &nbsp; <b>Zeitraum:</b> ${escapeHtml(st.zr)}</div>
-      <h3>Summen je Monteur / Tag</h3>
-      <table>
-        <thead><tr><th>Monteur</th>${head}<th>Woche gesamt</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-      <script>onload=function(){print()}</script>
-      </body></html>`;
+    const html = '<!doctype html><html><head><meta charset="utf-8"><title>Wochenbericht</title>'+
+      '<style>body{font:11px/1.4 system-ui,Segoe UI,Roboto,Arial;padding:18px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #777;padding:4px;text-align:center}h3{margin:8px 0 4px}@page{size:A4;margin:12mm}</style></head><body>'+
+      pdfHeader('Wochenbericht (alle Kunden)')+
+      '<div><b>KW:</b> '+escapeHtml(st.kw)+' &nbsp; <b>Zeitraum:</b> '+escapeHtml(st.zr)+'</div>'+
+      '<h3>Summen je Monteur / Tag</h3>'+
+      '<table><thead><tr><th>Monteur</th>'+head+'<th>Woche gesamt</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+      '<script>onload=function(){print()}</script></body></html>';
+
     writePrint(html);
   }
 
   function printMonteurWeekly(r){
-    const name = st.team[r] || `Monteur ${r+1}`;
-    const head = st.tage.map(t => `<th>${t}</th>`).join("");
-    let cells = "";
+    const name = st.team[r] || ('Monteur '+(r+1));
+    const head = st.tage.map(t => '<th>'+t+'</th>').join('');
+    let cells = '';
     let wsum = 0;
-
     st.tage.forEach((_,d) => {
       let s = 0;
       st.k.forEach(c => {
         s += parseFloat(c.h[r]?.[d] || 0) || 0;
       });
       wsum += s;
-      cells += `<td>${s.toFixed(2)}</td>`;
+      cells += '<td>'+s.toFixed(2)+'</td>';
     });
+    const row = '<tr><th style="text-align:left">'+escapeHtml(name)+'</th>'+cells+'<td><b>'+wsum.toFixed(2)+'</b></td></tr>';
 
-    const row = `<tr><th style="text-align:left">${escapeHtml(name)}</th>${cells}<td><b>${wsum.toFixed(2)}</b></td></tr>`;
+    const html = '<!doctype html><html><head><meta charset="utf-8"><title>Wochenbericht Monteur</title>'+
+      '<style>body{font:11px/1.4 system-ui,Segoe UI,Roboto,Arial;padding:18px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #777;padding:4px;text-align:center}h3{margin:8px 0 4px}@page{size:A4;margin:12mm}</style></head><body>'+
+      pdfHeader('Wochenbericht (Monteur) — '+escapeHtml(name))+
+      '<div><b>KW:</b> '+escapeHtml(st.kw)+' &nbsp; <b>Zeitraum:</b> '+escapeHtml(st.zr)+'</div>'+
+      '<table><thead><tr><th>Monteur</th>'+head+'<th>Woche gesamt</th></tr></thead><tbody>'+row+'</tbody></table>'+
+      '<script>onload=function(){print()}</script></body></html>';
 
-    const html = `<!doctype html><html><head><meta charset="utf-8">
-      <title>Wochenbericht Monteur</title>
-      <style>
-        body{font:11px/1.4 system-ui,Segoe UI,Roboto,Arial;padding:18px}
-        table{border-collapse:collapse;width:100%}
-        th,td{border:1px solid #777;padding:4px;text-align:center}
-        h3{margin:8px 0 4px}
-        @page{size:A4;margin:12mm}
-      </style></head><body>
-      ${pdfHeader("Wochenbericht (Monteur) — "+escapeHtml(name))}
-      <div><b>KW:</b> ${escapeHtml(st.kw)} &nbsp; <b>Zeitraum:</b> ${escapeHtml(st.zr)}</div>
-      <table>
-        <thead><tr><th>Monteur</th>${head}<th>Woche gesamt</th></tr></thead>
-        <tbody>${row}</tbody>
-      </table>
-      <script>onload=function(){print()}</script>
-      </body></html>`;
     writePrint(html);
   }
 
@@ -726,7 +662,7 @@
         if(!isNaN(n)) sum += n;
       });
       const last = tr.querySelector("td.sum-cell");
-      if(last) last.innerHTML = `<b>${sum.toFixed(2)}</b>`;
+      if(last) last.innerHTML = "<b>"+sum.toFixed(2)+"</b>";
     });
   }
 
