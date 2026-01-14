@@ -58,6 +58,7 @@
     <div class="row" style="margin-top:6px">
       <button class="btn secondary" id="btnApplyTeam">Team übernehmen</button>
       <button class="btn" id="btnWeeklyAll">Wochenbericht (alle) PDF</button>
+      <button class="btn secondary" id="btnPdfAllK">Alle Arbeitsberichte PDF</button>
       <select id="selMonteur" title="Monteur wählen"></select>
       <button class="btn secondary" id="btnWeeklyMonteur">PDF Monteur Woche</button>
       <button class="btn secondary" id="btnWipe">Daten löschen</button>
@@ -107,6 +108,21 @@
 
   function escapeHtml(s){return (s||"").toString().replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
   function escapeAttr(s){return (s||"").toString().replace(/&/g,"&amp;").replace(/"/g,"&quot;")}
+  function pad2(n){return (n<10?"0":"")+n;}
+  function formatDate(d){return pad2(d.getDate())+"."+pad2(d.getMonth()+1)+"."+d.getFullYear();}
+  function getIsoWeekInfo(date){
+    var d=new Date(date.getFullYear(),date.getMonth(),date.getDate());
+    var day=(d.getDay()+6)%7;
+    d.setDate(d.getDate()-day+3);
+    var firstThursday=new Date(d.getFullYear(),0,4);
+    var week=1+Math.round(((d-firstThursday)/86400000-3)/7);
+    var year=d.getFullYear();
+    var monday=new Date(date.getFullYear(),date.getMonth(),date.getDate());
+    monday.setDate(monday.getDate()-((monday.getDay()+6)%7));
+    var sunday=new Date(monday); sunday.setDate(monday.getDate()+6);
+    var saturday=new Date(monday); saturday.setDate(monday.getDate()+5);
+    return {week:week,year:year,monday:monday,saturday:saturday,sunday:sunday};
+  }
   function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
   function load(){try{var raw=localStorage.getItem(KEY); if(!raw) return; var o=JSON.parse(raw)||{}; if(o.kw)st.kw=o.kw; if(o.zr)st.zr=o.zr; if(Array.isArray(o.tage)&&o.tage.length)st.tage=o.tage; if(Array.isArray(o.team)&&o.team.length)st.team=o.team; if(Array.isArray(o.k)&&o.k.length)st.k=o.k; if(Array.isArray(o.abs))st.abs=o.abs;}catch(e){}}
 
@@ -238,6 +254,15 @@
 
   function render(){
     fixShapes();
+    if(!st.kw || !st.zr){
+      var info=getIsoWeekInfo(new Date());
+      if(!st.kw) st.kw="KW "+info.week;
+      if(!st.zr){
+        var endDate=st.tage.indexOf("So")>=0 ? info.sunday : info.saturday;
+        st.zr=formatDate(info.monday)+"–"+formatDate(endDate);
+      }
+      save();
+    }
     document.getElementById("kw").value=st.kw;
     document.getElementById("zr").value=st.zr;
     document.getElementById("sun").value=st.tage.indexOf("So")>=0?"1":"0";
@@ -274,6 +299,7 @@
     document.getElementById("btnApplyTeam").addEventListener("click",applyTeam);
 
     document.getElementById("btnWeeklyAll").addEventListener("click",printWeeklyAll);
+    document.getElementById("btnPdfAllK").addEventListener("click",printAllArbeitsberichte);
     document.getElementById("btnWeeklyMonteur").addEventListener("click",function(){var r=parseInt(document.getElementById("selMonteur").value||"0",10)||0; printMonteurWeekly(r);});
     document.getElementById("btnWipe").addEventListener("click",function(){if(confirm("Alle gespeicherten Daten löschen?")){try{localStorage.removeItem(KEY);}catch(e){} location.reload();}});
 
@@ -329,13 +355,47 @@
       pdfHeader("Arbeitsbericht")+
       "<div><b>KW:</b> "+escapeHtml(st.kw)+" &nbsp; <b>Zeitraum:</b> "+escapeHtml(st.zr)+"</div>"+
       "<table class='meta'><tr><td><b>Kunde:</b> "+escapeHtml(c.n||"")+"</td></tr><tr><td><b>Adresse:</b> "+escapeHtml(c.a||"")+"</td></tr></table>"+
-      "<h3>Auszuführende Arbeit</h3><div>"+escapeHtml(c.az||"").replace(/\n/g,"<br>")+"</div>"+
-      "<h3>Ausgeführte Arbeit</h3><div>"+escapeHtml(c.ag||"").replace(/\n/g,"<br>")+"</div>"+
+      "<h3>Auszuführende Arbeit</h3><div>"+escapeHtml(c.az||"").replace(/\\n/g,"<br>")+"</div>"+
+      "<h3>Ausgeführte Arbeit</h3><div>"+escapeHtml(c.ag||"").replace(/\\n/g,"<br>")+"</div>"+
       "<h3>Stunden</h3><table><thead><tr><th>Monteur</th>"+head+"<th>Woche gesamt</th></tr></thead><tbody>"+rows+"</tbody></table>"+
       "<h3>Materialverbrauch</h3><table><thead><tr><th>Material</th><th>Stückzahl</th><th>Bemerkung</th></tr></thead><tbody>"+mats+"</tbody></table>"+
       "<div style='display:flex;gap:40px;margin-top:24px'><div style='flex:1'><div>Ort, Datum: __________________</div><div class='signature'></div><div>Unterschrift Kunde</div></div><div style='flex:1'><div>Ort, Datum: __________________</div><div class='signature'></div><div>Unterschrift Monteur</div></div></div>"+
       "<script>onload=function(){print()}<\/script></body></html>";
       //           ^^^^^^^^^^^^^^^^^^^^^^^  WICHTIG: escapen!
+
+    writePrint(html);
+  }
+
+  // --- PDF Alle Arbeitsberichte ---
+  function printAllArbeitsberichte(){
+    var body="";
+    for(var i=0;i<st.k.length;i++){
+      var c=st.k[i];
+      var head=st.tage.map(function(t){return "<th>"+t+"</th>"}).join("");
+      var rows="";
+      for(var r=0;r<st.team.length;r++){
+        var sum=0,cells="";
+        for(var d=0;d<st.tage.length;d++){var n=parseFloat(c.h[r]?(c.h[r][d]||0):0)||0; sum+=n; cells+="<td>"+n.toFixed(2)+"</td>";}
+        rows+="<tr><th style='text-align:left'>"+escapeHtml(st.team[r])+"</th>"+cells+"<td><b>"+sum.toFixed(2)+"</b></td></tr>";
+      }
+      var mats=""; for(var m=0;m<c.m.length;m++){var it=c.m[m]; mats+="<tr><td>"+escapeHtml(it.b||"")+"</td><td>"+escapeHtml(it.s||"")+"</td><td>"+escapeHtml(it.r||"")+"</td></tr>";}
+      if(!mats) mats="<tr><td colspan='3' style='text-align:center;color:#666'>—</td></tr>";
+
+      body+=pdfHeader("Arbeitsbericht")+
+        "<div><b>KW:</b> "+escapeHtml(st.kw)+" &nbsp; <b>Zeitraum:</b> "+escapeHtml(st.zr)+"</div>"+
+        "<table class='meta'><tr><td><b>Kunde:</b> "+escapeHtml(c.n||"")+"</td></tr><tr><td><b>Adresse:</b> "+escapeHtml(c.a||"")+"</td></tr></table>"+
+        "<h3>Auszuführende Arbeit</h3><div>"+escapeHtml(c.az||"").replace(/\\n/g,"<br>")+"</div>"+
+        "<h3>Ausgeführte Arbeit</h3><div>"+escapeHtml(c.ag||"").replace(/\\n/g,"<br>")+"</div>"+
+        "<h3>Stunden</h3><table><thead><tr><th>Monteur</th>"+head+"<th>Woche gesamt</th></tr></thead><tbody>"+rows+"</tbody></table>"+
+        "<h3>Materialverbrauch</h3><table><thead><tr><th>Material</th><th>Stückzahl</th><th>Bemerkung</th></tr></thead><tbody>"+mats+"</tbody></table>"+
+        "<div style='display:flex;gap:40px;margin-top:24px'><div style='flex:1'><div>Ort, Datum: __________________</div><div class='signature'></div><div>Unterschrift Kunde</div></div><div style='flex:1'><div>Ort, Datum: __________________</div><div class='signature'></div><div>Unterschrift Monteur</div></div></div>";
+      if(i<st.k.length-1) body+="<div style='page-break-after:always'></div>";
+    }
+
+    var html="<!doctype html><html><head><meta charset='utf-8'><title>Arbeitsberichte</title>"+
+      "<style>body{font:12px/1.4 system-ui,Segoe UI,Roboto,Arial;padding:18px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #777;padding:5px;text-align:center}.meta td{border:none;text-align:left;padding:2px 0}.signature{height:50px;border-top:1px solid #777;margin-top:20px}@page{size:A4;margin:14mm}</style></head><body>"+
+      body+
+      "<script>onload=function(){print()}<\/script></body></html>";
 
     writePrint(html);
   }
