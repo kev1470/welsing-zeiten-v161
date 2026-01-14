@@ -27,6 +27,7 @@
   .btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:10px 12px;font-weight:800;cursor:pointer;min-height:40px;font-size:13px}
   .btn.secondary{background:transparent;color:#fff;border:2px solid var(--accent)}
   .abs-btn{min-height:34px;padding:6px 8px;font-size:14px;font-weight:700}
+  .abs-btn{min-height:34px;padding:6px 8px;font-size:14px;font-weight:700;width:100%}
   .absence-legend{font-size:11px;line-height:1.2}
   .pill{display:inline-block;background:#0f1116;border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:12px}
   .footer{position:sticky;bottom:0;background:#0f1116;border-top:3px solid var(--primary);padding:8px 12px;display:flex;gap:8px;flex-wrap:wrap;z-index:9}
@@ -81,8 +82,8 @@
   <div class="card">
     <div class="row" style="justify-content:space-between;width:100%">
       <b>Abwesenheiten (Urlaub/Feiertag/Krank)</b>
-      <span class="pill">Tippen = U → F → K → leer</span>
       <span class="pill absence-legend">Tippen: — → U → F → K</span>
+      <span class="pill absence-legend">Auswahl: — / U / F / K</span>
     </div>
     <div id="absence"></div>
   </div>
@@ -140,6 +141,8 @@
     if(st.abs[r]) st.abs[r][d]=next;
     save();
     renderAbsence();
+  function setAbsence(r,d,v){
+    if(st.abs[r]){st.abs[r][d]=v; save();}
   }
   function addKunde(){st.k.push(newK()); save(); render(); setSel(st.k.length-1);}
   function remKunde(){if(st.k.length<=1){alert("Mindestens 1 Kunde.");return} st.k.splice(lastSel,1); if(lastSel>=st.k.length) lastSel=st.k.length-1; save(); render(); setSel(lastSel);}
@@ -180,8 +183,13 @@
       rows+="<tr><th style='text-align:left'>"+escapeHtml(st.team[r])+"</th>";
       for(var d=0;d<st.tage.length;d++){
         var v=(st.abs[r] && st.abs[r][d]) || "";
-        rows+="<td><button class='btn secondary' data-action='cycleAbs' data-r='"+r+"' data-d='"+d+"' style='width:100%'>"+(v||"—")+"</button></td>";
         rows+="<td><button class='btn secondary abs-btn' data-action='cycleAbs' data-r='"+r+"' data-d='"+d+"' style='width:100%'>"+(v||"—")+"</button></td>";
+        rows+="<td><select class='abs-btn' data-action='setAbs' data-r='"+r+"' data-d='"+d+"'>"+
+          "<option value=''"+(v===""?" selected":"")+">—</option>"+
+          "<option value='U'"+(v==="U"?" selected":"")+">U</option>"+
+          "<option value='F'"+(v==="F"?" selected":"")+">F</option>"+
+          "<option value='K'"+(v==="K"?" selected":"")+">K</option>"+
+          "</select></td>";
       }
       rows+="</tr>";
     }
@@ -277,12 +285,17 @@
       else if(act==="delM") delM(i,+b.dataset.m);
       else if(act==="printK") printK(i);
     });
+
     var ab=document.getElementById("absence");
     ab.addEventListener("click",function(e){
       var b=e.target.closest("button[data-action='cycleAbs']"); if(!b) return;
       cycleAbsence(+b.dataset.r,+b.dataset.d);
+    ab.addEventListener("change",function(e){
+      var sel=e.target.closest("select[data-action='setAbs']"); if(!sel) return;
+      setAbsence(+sel.dataset.r,+sel.dataset.d,sel.value);
     });
   }
+
   function pdfHeader(title){return "<div style='margin-bottom:4px;font-weight:700'>"+title+"</div>";}
   function writePrint(html){var fr=document.getElementById("printFrame"); var win=fr.contentWindow||fr; var doc=win.document; doc.open(); doc.write(html); doc.close();}
   // --- PDF Kunde ---
