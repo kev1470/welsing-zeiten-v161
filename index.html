@@ -79,6 +79,14 @@
     </div>
     <div id="overview"></div>
   </div>
+
+  <div class="card">
+    <div class="row" style="justify-content:space-between;width:100%">
+      <b>Abwesenheiten (Urlaub/Feiertag/Krank)</b>
+      <span class="pill">Tippen = U → F → K → leer</span>
+    </div>
+    <div id="absence"></div>
+  </div>
 </div>
 
 <div class="footer">
@@ -92,13 +100,13 @@
 <script>
 (function(){
   var KEY="wz_v165_compact_monteur";
-  var st={kw:"",zr:"",tage:["Mo","Di","Mi","Do","Fr","Sa"],team:["Kevin","Jacub","Mario","Martin","Tomas"],k:[]};
+  var st={kw:"",zr:"",tage:["Mo","Di","Mi","Do","Fr","Sa"],team:["Kevin","Jacub","Mario","Martin","Tomas"],k:[],abs:[]};
   var lastSel=0, delegatesAttached=false;
 
   function escapeHtml(s){return (s||"").toString().replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
   function escapeAttr(s){return (s||"").toString().replace(/&/g,"&amp;").replace(/"/g,"&quot;")}
   function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
-  function load(){try{var raw=localStorage.getItem(KEY); if(!raw) return; var o=JSON.parse(raw)||{}; if(o.kw)st.kw=o.kw; if(o.zr)st.zr=o.zr; if(Array.isArray(o.tage)&&o.tage.length)st.tage=o.tage; if(Array.isArray(o.team)&&o.team.length)st.team=o.team; if(Array.isArray(o.k)&&o.k.length)st.k=o.k;}catch(e){}}
+  function load(){try{var raw=localStorage.getItem(KEY); if(!raw) return; var o=JSON.parse(raw)||{}; if(o.kw)st.kw=o.kw; if(o.zr)st.zr=o.zr; if(Array.isArray(o.tage)&&o.tage.length)st.tage=o.tage; if(Array.isArray(o.team)&&o.team.length)st.team=o.team; if(Array.isArray(o.k)&&o.k.length)st.k=o.k; if(Array.isArray(o.abs))st.abs=o.abs;}catch(e){}}
 
   function newK(){return {n:"",a:"",az:"",ag:"",h:st.team.map(function(){return st.tage.map(function(){return ""})}),m:[{b:"",s:"",r:""}]};}
   function ensureAtLeastOneKunde(){if(!Array.isArray(st.k)||st.k.length===0){st.k=[newK()];}}
@@ -115,6 +123,14 @@
       }
       if(!Array.isArray(c.m)||c.m.length===0) c.m=[{b:"",s:"",r:""}];
     }
+    if(!Array.isArray(st.abs)) st.abs=[];
+    while(st.abs.length<st.team.length) st.abs.push(st.tage.map(function(){return "";}));
+    while(st.abs.length>st.team.length) st.abs.pop();
+    for(var a=0;a<st.abs.length;a++){
+      if(!Array.isArray(st.abs[a])) st.abs[a]=[];
+      while(st.abs[a].length<st.tage.length) st.abs[a].push("");
+      while(st.abs[a].length>st.tage.length) st.abs[a].pop();
+    }
   }
 
   function sanitizeDec(s){s=(s||"").toString().replace(/,/g,".").replace(/[^0-9.]/g,""); var p=s.indexOf("."); if(p>=0) s=s.slice(0,p+1)+s.slice(p+1).replace(/\./g,""); return s;}
@@ -123,6 +139,15 @@
   function addM(i){if(st.k[i]){st.k[i].m.push({b:"",s:"",r:""}); save(); render();}}
   function delM(i,m){if(st.k[i]&&st.k[i].m&&st.k[i].m[m]!=null){st.k[i].m.splice(m,1); if(st.k[i].m.length===0) st.k[i].m.push({b:"",s:"",r:""}); save(); render();}}
   function setM(i,m,f,v){if(st.k[i]&&st.k[i].m&&st.k[i].m[m]){st.k[i].m[m][f]=v; save();}}
+  function cycleAbsence(r,d){
+    var order=["","U","F","K"];
+    var cur=(st.abs[r] && st.abs[r][d]) || "";
+    var idx=order.indexOf(cur);
+    var next=order[(idx+1)%order.length];
+    if(st.abs[r]) st.abs[r][d]=next;
+    save();
+    renderAbsence();
+  }
   function addKunde(){st.k.push(newK()); save(); render(); setSel(st.k.length-1);}
   function remKunde(){if(st.k.length<=1){alert("Mindestens 1 Kunde.");return} st.k.splice(lastSel,1); if(lastSel>=st.k.length) lastSel=st.k.length-1; save(); render(); setSel(lastSel);}
   function setSel(v){lastSel=parseInt(v||"0",10)||0; var s1=document.getElementById("sel"), s2=document.getElementById("sel2"); if(s1) s1.value=String(lastSel); if(s2) s2.value=String(lastSel);}
@@ -156,6 +181,20 @@
       rows+="<tr><th style='text-align:left'>"+escapeHtml(st.team[r])+"</th>"+cells+"<td><b>"+w.toFixed(2)+"</b></td></tr>";
     }
     document.getElementById("overview").innerHTML="<div class='hscroll'><table><thead><tr><th>Monteur</th>"+head+"<th>Woche gesamt</th></tr></thead><tbody>"+rows+"</tbody></table></div>";
+  }
+
+  function renderAbsence(){
+    var head=st.tage.map(function(t){return "<th>"+t+"</th>"}).join("");
+    var rows="";
+    for(var r=0;r<st.team.length;r++){
+      rows+="<tr><th style='text-align:left'>"+escapeHtml(st.team[r])+"</th>";
+      for(var d=0;d<st.tage.length;d++){
+        var v=(st.abs[r] && st.abs[r][d]) || "";
+        rows+="<td><button class='btn secondary' data-action='cycleAbs' data-r='"+r+"' data-d='"+d+"' style='width:100%'>"+(v||"—")+"</button></td>";
+      }
+      rows+="</tr>";
+    }
+    document.getElementById("absence").innerHTML="<div class='hscroll'><table><thead><tr><th>Monteur</th>"+head+"</tr></thead><tbody>"+rows+"</tbody></table></div>";
   }
 
   function kundenCard(i){
@@ -212,6 +251,7 @@
     var html=""; for(var j=0;j<st.k.length;j++){html+=kundenCard(j);} document.getElementById("kunden").innerHTML=html;
 
     renderOverview();
+    renderAbsence();
     setSel(lastSel);
     attachDelegatesOnce();
 
@@ -258,6 +298,12 @@
       if(act==="addM") addM(i);
       else if(act==="delM") delM(i,+b.dataset.m);
       else if(act==="printK") printK(i);
+    });
+
+    var ab=document.getElementById("absence");
+    ab.addEventListener("click",function(e){
+      var b=e.target.closest("button[data-action='cycleAbs']"); if(!b) return;
+      cycleAbsence(+b.dataset.r,+b.dataset.d);
     });
   }
 
@@ -317,11 +363,23 @@
     var lrows=lines.map(function(x){return "<tr><td>"+x.tag+"</td><td>"+escapeHtml(x.kunde)+"</td><td>"+escapeHtml(x.monteur)+"</td><td>"+x.stunden.toFixed(2)+"</td></tr>";}).join("");
     if(!lrows) lrows="<tr><td colspan='4' style='text-align:center;color:#666'>—</td></tr>";
 
+    var absRows="";
+    for(var ar=0;ar<st.team.length;ar++){
+      absRows+="<tr><th style='text-align:left'>"+escapeHtml(st.team[ar])+"</th>";
+      for(var ad=0;ad<st.tage.length;ad++){
+        var av=(st.abs[ar] && st.abs[ar][ad]) || "—";
+        absRows+="<td>"+av+"</td>";
+      }
+      absRows+="</tr>";
+    }
+    var absHead=st.tage.map(function(t){return "<th>"+t+"</th>"}).join("");
+
     var html="<!doctype html><html><head><meta charset='utf-8'><title>Wochenbericht</title>"+
       "<style>body{font:12px/1.4 system-ui,Segoe UI,Roboto,Arial;padding:18px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #777;padding:5px;text-align:center}@page{size:A4;margin:14mm}</style></head><body>"+
       pdfHeader("Wochenbericht (alle Kunden)")+
       "<div><b>KW:</b> "+escapeHtml(st.kw)+" &nbsp; <b>Zeitraum:</b> "+escapeHtml(st.zr)+"</div>"+
       "<h3>Summen je Monteur / Tag</h3><table><thead><tr><th>Monteur</th>"+head+"<th>Woche gesamt</th></tr></thead><tbody>"+rows+"</tbody></table>"+
+      "<h3 style='margin-top:14px'>Abwesenheiten (U/F/K)</h3><table><thead><tr><th>Monteur</th>"+absHead+"</tr></thead><tbody>"+absRows+"</tbody></table>"+
       "<h3 style='margin-top:14px'>Detail (Tag / Kunde / Monteur)</h3><table><thead><tr><th>Tag</th><th>Kunde</th><th>Monteur</th><th>Stunden</th></tr></thead><tbody>"+lrows+"</tbody></table>"+
       "<script>onload=function(){print()}<\/script></body></html>";
       //           ^^^^^^^^^^^^^^^^^^^^^^^  WICHTIG
@@ -349,11 +407,19 @@
     var lrows=lines.map(function(x){return "<tr><td>"+x.tag+"</td><td>"+escapeHtml(x.kunde)+"</td><td>"+x.stunden.toFixed(2)+"</td></tr>";}).join("");
     if(!lrows) lrows="<tr><td colspan='3' style='text-align:center;color:#666'>—</td></tr>";
 
+    var absCells="";
+    for(var ad=0;ad<st.tage.length;ad++){
+      var av=(st.abs[r] && st.abs[r][ad]) || "—";
+      absCells+="<td>"+av+"</td>";
+    }
+    var absRow="<tr><th style='text-align:left'>"+escapeHtml(name)+"</th>"+absCells+"</tr>";
+
     var html="<!doctype html><html><head><meta charset='utf-8'><title>Wochenbericht Monteur</title>"+
       "<style>body{font:12px/1.4 system-ui,Segoe UI,Roboto,Arial;padding:18px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #777;padding:5px;text-align:center}@page{size:A4;margin:14mm}</style></head><body>"+
       pdfHeader("Wochenbericht (Monteur) — "+escapeHtml(name))+
       "<div><b>KW:</b> "+escapeHtml(st.kw)+" &nbsp; <b>Zeitraum:</b> "+escapeHtml(st.zr)+"</div>"+
       "<h3>Summen je Tag</h3><table><thead><tr><th>Monteur</th>"+head+"<th>Woche gesamt</th></tr></thead><tbody>"+row+"</tbody></table>"+
+      "<h3 style='margin-top:14px'>Abwesenheiten (U/F/K)</h3><table><thead><tr><th>Monteur</th>"+head+"</tr></thead><tbody>"+absRow+"</tbody></table>"+
       "<h3 style='margin-top:14px'>Detail (Tag / Kunde)</h3><table><thead><tr><th>Tag</th><th>Kunde</th><th>Stunden</th></tr></thead><tbody>"+lrows+"</tbody></table>"+
       "<script>onload=function(){print()}<\/script></body></html>";
       //           ^^^^^^^^^^^^^^^^^^^^^^^  WICHTIG
