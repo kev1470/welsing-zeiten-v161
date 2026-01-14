@@ -3,563 +3,219 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Welsing Zeiten – v1.6.5 Kompakt + Monteur (stabil + Urlaub + Gesamt-PDF)</title>
-<meta name="theme-color" content="#E2231A">
+<title>Welsing Zeiten – v1.6.5 stabil</title>
+
 <style>
-  :root{--bg:#0b0c10;--card:#15171c;--ink:#fff;--muted:#c7c7c9;--accent:#F28C00;--accent-ink:#1a1300;--primary:#E2231A;--line:#2a2e36;--focus:#FBB040}
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.35 system-ui,Segoe UI,Roboto,Arial,sans-serif}
-  header{padding:10px 14px;position:sticky;top:0;z-index:9;background:var(--primary);border-bottom:4px solid var(--focus);display:flex;justify-content:space-between;align-items:center}
-  .ver{font-size:12px;background:#00000033;border:1px solid #ffffff33;padding:2px 6px;border-radius:8px}
-  .wrap{padding:14px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin:10px 0}
-  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  .grid{display:grid;gap:10px}
-  .cols2{grid-template-columns:1fr 1fr}
-  @media(max-width:720px){.cols2{grid-template-columns:1fr}}
-  label{font-size:13px;color:var(--muted)}
-  input,select,textarea,button{font-size:16px}
-  input[type="text"],textarea,select{background:#0f1116;border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px;width:100%;-webkit-text-fill-color:#fff;color:#fff;caret-color:var(--focus)}
-  textarea{min-height:90px}
-  table{border-collapse:collapse;width:100%;background:#0f1116;border-radius:10px;overflow:hidden;font-size:12px}
-  th,td{border:1px solid var(--line);padding:6px;text-align:center}
-  thead th{background:var(--focus);color:#000;font-weight:800}
-  .btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:10px 12px;font-weight:800;cursor:pointer;min-height:40px;font-size:13px}
-  .btn.secondary{background:transparent;color:#fff;border:2px solid var(--accent)}
-  .pill{display:inline-block;background:#0f1116;border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:12px}
-  .footer{position:sticky;bottom:0;background:#0f1116;border-top:3px solid var(--primary);padding:8px 12px;display:flex;gap:8px;flex-wrap:wrap;z-index:9}
-  .footer>*{flex:1 1 30%}
-  iframe#printFrame{position:fixed;left:-9999px;top:-9999px;width:0;height:0;border:0}
-  .hcell input{-webkit-appearance:none;appearance:none;background:#0f1116!important;border:0;width:100%;text-align:center;font-size:16px;font-weight:600;color:#ffffff!important;-webkit-text-fill-color:#ffffff!important;caret-color:var(--focus)}
-  .hcell input::placeholder{color:#666}
-  .hscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-  .hscroll table{min-width:640px}
-  @media(max-width:720px){th,td{padding:4px}.btn{padding:8px 10px}.hscroll table{min-width:560px}}
-  /* Urlaub-Markierung */
-  .vacation{ background:#f5e68a !important; color:#1a1300 !important; font-weight:700; }
+:root{
+  --bg:#0b0c10;--card:#15171c;--ink:#fff;--muted:#bbb;
+  --accent:#F28C00;--primary:#E2231A;--line:#2a2e36
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px system-ui}
+header{background:var(--primary);padding:10px;display:flex;justify-content:space-between}
+.wrap{padding:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px}
+.row{display:flex;gap:6px;flex-wrap:wrap}
+label{font-size:12px;color:var(--muted)}
+input,select,textarea,button{font-size:15px}
+input,select,textarea{width:100%;background:#0f1116;color:#fff;border:1px solid var(--line);border-radius:8px;padding:8px}
+textarea{min-height:70px}
+button{background:var(--accent);border:0;border-radius:8px;padding:8px 10px;font-weight:700}
+button.secondary{background:transparent;color:#fff;border:2px solid var(--accent)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{border:1px solid var(--line);padding:4px;text-align:center}
+thead th{background:#fbb040;color:#000}
+.hscroll{overflow-x:auto}
+.hscroll table{min-width:560px}
+.footer{position:sticky;bottom:0;background:#0f1116;padding:8px;display:flex;gap:6px}
+iframe{display:none}
+
+.hcell input{
+  text-align:center;font-weight:600;font-size:15px;
+  background:#0f1116;color:#fff;border:0
+}
 </style>
 </head>
+
 <body>
 <header>
   <b>Welsing Zeiten</b>
-  <div class="ver">v1.6.5 Kompakt + Monteur</div>
+  <span>v1.6.5 stabil</span>
 </header>
 
 <div class="wrap">
-  <div class="card">
-    <div class="grid cols2">
-      <div><label>KW</label><input id="kw" type="text" placeholder="z. B. KW 42"></div>
-      <div><label>Zeitraum</label><input id="zr" type="text" placeholder="z. B. 13.10.–18.10.2025"></div>
+
+<div class="card">
+  <div class="row">
+    <div style="flex:1">
+      <label>KW</label>
+      <input id="kw">
     </div>
-    <div class="grid cols2">
-      <div><label>Monteur-Team (Komma)</label><input id="team" type="text" placeholder="z. B. Kevin, Jacub, Mario"></div>
-      <div><label>Sonntag</label><select id="sun"><option value="0">aus</option><option value="1">an</option></select></div>
-    </div>
-    <div class="row" style="margin-top:6px">
-      <button class="btn secondary" id="btnApplyTeam">Team übernehmen</button>
-      <button class="btn" id="btnWeeklyAll">Wochenbericht (alle) PDF</button>
-      <select id="selMonteur" title="Monteur wählen"></select>
-      <button class="btn secondary" id="btnWeeklyMonteur">PDF Monteur Woche</button>
-      <button class="btn secondary" id="btnWipe">Daten löschen</button>
+    <div style="flex:1">
+      <label>Zeitraum</label>
+      <input id="zr">
     </div>
   </div>
 
-  <div class="card">
-    <div class="row" style="margin-bottom:8px">
-      <button class="btn secondary" id="btnAddK">+ Kunde</button>
-      <button class="btn secondary" id="btnRemK">− Kunde</button>
-      <select id="sel"></select>
-      <button class="btn" id="btnScroll">Zu Kunde</button>
+  <div class="row">
+    <div style="flex:2">
+      <label>Monteur (Komma)</label>
+      <input id="team">
     </div>
-    <div id="kunden"></div>
+    <div style="flex:1">
+      <label>Datum automatisch</label>
+      <button class="secondary" id="btnDate">Heute</button>
+    </div>
   </div>
 
-  <div class="card">
-    <div class="row" style="justify-content:space-between;width:100%">
-      <b>Wochenübersicht (Summe je Monteur & Tag)</b>
-      <span style="color:#bbb">nur zur Kontrolle</span>
-    </div>
-    <div id="overview"></div>
+  <div class="row">
+    <button id="btnApply">Team übernehmen</button>
+    <button id="btnWeek">PDF Woche</button>
+    <select id="selMonteur"></select>
+    <button class="secondary" id="btnMonteur">PDF Monteur</button>
   </div>
+</div>
+
+<div class="card">
+  <div class="row">
+    <button class="secondary" id="addK">+ Kunde</button>
+    <button class="secondary" id="remK">− Kunde</button>
+    <select id="selK"></select>
+  </div>
+  <div id="kunden"></div>
+</div>
+
 </div>
 
 <div class="footer">
-  <select id="sel2"></select>
-  <button class="btn secondary" id="btnScroll2">Zu Kunde</button>
-  <button class="btn" id="btnPdfArbeitsbericht">PDF Kunde</button>
-  <button class="btn" id="btnAllReports">Alle Arbeitsberichte</button>
+  <button id="pdfKunde">PDF Kunde</button>
 </div>
 
-<iframe id="printFrame"></iframe>
-
-<!-- jsPDF + AutoTable (CDN) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<iframe id="print"></iframe>
 
 <script>
-(async function(){
-  // make jspdf available
-  const { jsPDF } = window.jspdf || window.jspdf || window;
-  // --- existing app state + functions (kept from your file) ---
-  var KEY="wz_v165_compact_monteur";
-  var st={kw:"",zr:"",tage:["Mo","Di","Mi","Do","Fr","Sa"],team:["Kevin","Jacub","Mario","Martin","Tomas"],k:[]};
-  var lastSel=0, delegatesAttached=false;
+(function(){
+const KEY="wz_v165_final";
 
-  function escapeHtml(s){return (s||"").toString().replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
-  function escapeAttr(s){return (s||"").toString().replace(/&/g,"&amp;").replace(/"/g,"&quot;")}
-  function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
-  function load(){try{var raw=localStorage.getItem(KEY); if(!raw) return; var o=JSON.parse(raw)||{}; if(o.kw)st.kw=o.kw; if(o.zr)st.zr=o.zr; if(Array.isArray(o.tage)&&o.tage.length)st.tage=o.tage; if(Array.isArray(o.team)&&o.team.length)st.team=o.team; if(Array.isArray(o.k)&&o.k.length)st.k=o.k;}catch(e){}}
+let st={
+  kw:"",zr:"",
+  tage:["Mo","Di","Mi","Do","Fr","Sa"],
+  team:["Kevin","Mario"],
+  k:[]
+};
 
-  function newK(){return {n:"",a:"",az:"",ag:"",h:st.team.map(function(){return st.tage.map(function(){return ""})}),m:[{b:"",s:"",r:""}]};}
-  function ensureAtLeastOneKunde(){if(!Array.isArray(st.k)||st.k.length===0){st.k=[newK()];}}
-  function fixShapes(){
-    ensureAtLeastOneKunde();
-    for(var i=0;i<st.k.length;i++){
-      var c=st.k[i]; if(!Array.isArray(c.h)) c.h=[];
-      while(c.h.length<st.team.length) c.h.push(st.tage.map(function(){return ""}));
-      while(c.h.length>st.team.length) c.h.pop();
-      for(var r=0;r<c.h.length;r++){
-        if(!Array.isArray(c.h[r])) c.h[r]=[];
-        while(c.h[r].length<st.tage.length) c.h[r].push("");
-        while(c.h[r].length>st.tage.length) c.h[r].pop();
-      }
-      if(!Array.isArray(c.m)||c.m.length===0) c.m=[{b:"",s:"",r:""}];
+function save(){localStorage.setItem(KEY,JSON.stringify(st))}
+function load(){
+  let r=localStorage.getItem(KEY);
+  if(r) st=JSON.parse(r)
+}
+
+function newK(){
+  return {
+    n:"",a:"",az:"",ag:"",
+    h:st.team.map(()=>st.tage.map(()=>"" ))
+  }
+}
+
+function ensure(){
+  if(!st.k.length) st.k=[newK()]
+}
+
+function render(){
+  ensure();
+  kw.value=st.kw; zr.value=st.zr; team.value=st.team.join(", ");
+
+  selMonteur.innerHTML=st.team.map((n,i)=>`<option value="${i}">${n}</option>`).join("");
+  selK.innerHTML=st.k.map((_,i)=>`<option value="${i}">Kunde ${i+1}</option>`).join("");
+
+  kunden.innerHTML=st.k.map((c,i)=>card(c,i)).join("");
+  save();
+}
+
+function card(c,i){
+  let rows="";
+  st.team.forEach((n,r)=>{
+    rows+=`<tr><th>${n}</th>`+
+      st.tage.map((_,d)=>{
+        return `<td class="hcell">
+          <input data-i="${i}" data-r="${r}" data-d="${d}" value="${c.h[r][d]}">
+        </td>`
+      }).join("")+
+      `</tr>`;
+  });
+
+  return `
+  <div class="card">
+    <label>Name</label><input data-f="n" data-i="${i}" value="${c.n}">
+    <label>Adresse</label><input data-f="a" data-i="${i}" value="${c.a}">
+    <div class="hscroll">
+      <table>
+        <thead><tr><th>Monteur</th>${st.tage.map(t=>`<th>${t}</th>`).join("")}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+document.addEventListener("input",e=>{
+  let t=e.target;
+  if(t.dataset.f){
+    st.k[t.dataset.i][t.dataset.f]=t.value;
+  }
+  if(t.dataset.d!==undefined){
+    let v=t.value.toUpperCase();
+    if(["U","URLAUB","K","KRANK","F","FEIERTAG"].includes(v)){
+      st.k[t.dataset.i].h[t.dataset.r][t.dataset.d]=v;
+    }else{
+      st.k[t.dataset.i].h[t.dataset.r][t.dataset.d]=v.replace(/[^0-9.,]/g,"");
     }
   }
+  save();
+});
 
-  function sanitizeDecOrVacation(s){
-    s = (s||"").toString().trim();
-    if(/^u$/i.test(s)) return "U";
-    s = s.replace(/,/g,".").replace(/[^0-9.]/g,"");
-    var p = s.indexOf(".");
-    if(p>=0) s = s.slice(0,p+1) + s.slice(p+1).replace(/\./g,"");
-    return s;
-  }
+btnApply.onclick=()=>{
+  st.team=team.value.split(",").map(s=>s.trim()).filter(Boolean);
+  st.k.forEach(k=>{
+    k.h=st.team.map(()=>st.tage.map(()=>"" ))
+  });
+  render();
+};
 
-  function setH(i,r,d,v){
-    v = sanitizeDecOrVacation(v);
-    if(st.k[i] && st.k[i].h && st.k[i].h[r] != null){
-      st.k[i].h[r][d] = v;
-      save();
-      updateRowSum(i,r);
-      renderOverview();
-      var inp = document.querySelector('input[data-i="'+i+'"][data-r="'+r+'"][data-d="'+d+'"]');
-      if(inp){
-        if(v === "U"){ inp.classList.add('vacation'); inp.value = "U"; } else { inp.classList.remove('vacation'); inp.value = v; }
-      }
-    }
-  }
-  function setF(i,f,v){ if(st.k[i]){ st.k[i][f]=v; save(); renderOverview(); } }
-  function addM(i){ if(st.k[i]){ st.k[i].m.push({b:"",s:"",r:""}); save(); render(); } }
-  function delM(i,m){ if(st.k[i]&&st.k[i].m&&st.k[i].m[m]!=null){ st.k[i].m.splice(m,1); if(st.k[i].m.length===0) st.k[i].m.push({b:"",s:"",r:""}); save(); render(); } }
-  function setM(i,m,f,v){ if(st.k[i]&&st.k[i].m&&st.k[i].m[m]){ st.k[i].m[m][f]=v; save(); } }
-  function addKunde(){ st.k.push(newK()); save(); render(); setSel(st.k.length-1); }
-  function remKunde(){ if(st.k.length<=1){ alert("Mindestens 1 Kunde."); return } st.k.splice(lastSel,1); if(lastSel>=st.k.length) lastSel=st.k.length-1; save(); render(); setSel(lastSel); }
-  function setSel(v){ lastSel=parseInt(v||"0",10)||0; var s1=document.getElementById("sel"), s2=document.getElementById("sel2"); if(s1) s1.value=String(lastSel); if(s2) s2.value=String(lastSel); }
-  function scrollSel(){ var el=document.getElementById("k"+lastSel); if(el) el.scrollIntoView({behavior:"smooth"}); }
-  function toggleSun(v){ if(v==="1"){ if(st.tage.indexOf("So")<0) st.tage.push("So"); } else { st.tage = st.tage.filter(function(t){return t!=="So"}); } fixShapes(); save(); render(); }
-  function applyTeam(){ var raw=document.getElementById("team").value; var arr=raw.split(",").map(function(s){return s.trim()}).filter(Boolean); if(arr.length){ st.team=arr; fixShapes(); save(); render(); } }
+addK.onclick=()=>{st.k.push(newK());render()};
+remK.onclick=()=>{if(st.k.length>1){st.k.pop();render()}};
 
-  function updateRowSum(i,r){
-    var card=document.getElementById("k"+i); if(!card) return;
-    var tr=card.querySelector('tr[data-r="'+r+'"]'); if(!tr) return;
-    var sum=0;
-    tr.querySelectorAll("td.hcell input").forEach(function(inp){
-      var v=(inp.value||"").toString().trim();
-      if(/^u$/i.test(v)){ return; }
-      var n=parseFloat(v.replace(/,/g,"."));
-      if(!isNaN(n)) sum += n;
-    });
-    var cell=tr.querySelector("td.sum-cell"); if(cell) cell.innerHTML="<b>"+sum.toFixed(2)+"</b>";
-  }
+btnDate.onclick=()=>{
+  let d=new Date();
+  zr.value=d.toLocaleDateString("de-DE");
+  st.zr=zr.value; save();
+};
 
-  function renderOverview(){
-    var grid = st.team.map(function(){ return st.tage.map(function(){ return 0; }); });
-    for(var k=0;k<st.k.length;k++){
-      var c = st.k[k];
-      for(var r=0;r<st.team.length;r++){
-        for(var d=0; d<st.tage.length; d++){
-          var v = c.h[r] ? (c.h[r][d]||0) : 0;
-          if(v === "U") v = 0;
-          var n = parseFloat(v)||0;
-          grid[r][d] += n;
-        }
-      }
-    }
-    var head = st.tage.map(function(t){return "<th>"+t+"</th>"}).join("");
-    var rows = "";
-    for(var r=0;r<st.team.length;r++){
-      var w=0,cells="";
-      for(var d=0; d<st.tage.length; d++){ w+=grid[r][d]; cells += "<td>"+grid[r][d].toFixed(2)+"</td>"; }
-      rows += "<tr><th style='text-align:left'>"+escapeHtml(st.team[r])+"</th>"+cells+"<td><b>"+w.toFixed(2)+"</b></td></tr>";
-    }
-    document.getElementById("overview").innerHTML = "<div class='hscroll'><table><thead><tr><th>Monteur</th>"+head+"<th>Woche gesamt</th></tr></thead><tbody>"+rows+"</tbody></table></div>";
-  }
+kw.oninput=()=>{st.kw=kw.value;save()};
+zr.oninput=()=>{st.zr=zr.value;save()};
 
-  function kundenCard(i){
-    var c=st.k[i], rows="";
-    for(var r=0;r<st.team.length;r++){
-      rows += "<tr data-r='"+r+"'><th style='text-align:left'>"+escapeHtml(st.team[r])+"</th>";
-      for(var d=0; d<st.tage.length; d++){
-        var v = (c.h[r] && c.h[r][d]) || "";
-        var cls = (v==="U"||v==="u") ? "vacation" : "";
-        var val = (v==="U") ? "U" : v;
-        rows += "<td class='hcell'><input class='"+cls+"' type='tel' inputmode='decimal' placeholder='0' value='"+escapeAttr(val)+"' data-i='"+i+"' data-r='"+r+"' data-d='"+d+"'></td>";
-      }
-      rows += "<td class='sum-cell'><b>0.00</b></td></tr>";
-    }
-    var mats="";
-    for(var m=0;m<c.m.length;m++){
-      var it=c.m[m];
-      mats += "<tr><td><input type='text' value='"+escapeAttr(it.b)+"' data-i='"+i+"' data-m='"+m+"' data-f='b'></td>"+
-             "<td><input type='text' value='"+escapeAttr(it.s)+"' data-i='"+i+"' data-m='"+m+"' data-f='s'></td>"+
-             "<td><input type='text' value='"+escapeAttr(it.r)+"' data-i='"+i+"' data-m='"+m+"' data-f='r'></td>"+
-             "<td><button class='btn secondary' data-action='delM' data-i='"+i+"' data-m='"+m+"'>−</button></td></tr>";
-    }
-    if(!mats) mats = "<tr><td colspan='4' style='text-align:center;color:#666'>—</td></tr>";
-    return "<div class='card' id='k"+i+"'>"+
-      "<div class='row'><span class='pill'>Kunde "+String(i+1).padStart(2,"0")+"</span>"+
-      "<button class='btn' data-action='printK' data-i='"+i+"' style='margin-left:auto'>PDF Arbeitsbericht</button></div>"+
-      "<div class='grid cols2' style='margin-top:6px'>"+
-        "<div><label>Name</label><input type='text' value='"+escapeAttr(c.n)+"' data-action='setF' data-i='"+i+"' data-f='n'></div>"+
-        "<div><label>Adresse</label><input type='text' value='"+escapeAttr(c.a)+"' data-action='setF' data-i='"+i+"' data-f='a'></div>"+
-      "</div>"+
-      "<div class='grid cols2' style='margin-top:6px'>"+
-        "<div><label>Auszuführende Arbeit</label><textarea data-action='setF' data-i='"+i+"' data-f='az'>"+escapeHtml(c.az)+"</textarea></div>"+
-        "<div><label>Ausgeführte Arbeit</label><textarea data-action='setF' data-i='"+i+"' data-f='ag'>"+escapeHtml(c.ag)+"</textarea></div>"+
-      "</div>"+
-      "<div style='margin-top:8px'><b>Stunden</b><div class='hscroll'>"+
-        "<table><thead><tr><th>Monteur</th>"+st.tage.map(function(t){return "<th>"+t+"</th>" }).join("")+"<th>Woche gesamt</th></tr></thead><tbody>"+rows+"</tbody></table>"+
-      "</div></div>"+
-      "<div style='margin-top:8px'><b>Materialverbrauch</b> <button class='btn secondary' data-action='addM' data-i='"+i+"'>+ Material</button>"+
-        "<div class='hscroll'><table style='margin-top:6px'><thead><tr><th>Material</th><th>Stückzahl</th><th>Bemerkung</th><th></th></tr></thead><tbody>"+mats+"</tbody></table></div>"+
-      "</div></div>";
-  }
+function printHTML(html){
+  let f=print.contentWindow.document;
+  f.open();f.write(html);f.close();
+}
 
-  function render(){
-    fixShapes();
-    document.getElementById("kw").value = st.kw;
-    document.getElementById("zr").value = st.zr;
-    document.getElementById("sun").value = st.tage.indexOf("So")>=0 ? "1" : "0";
-    document.getElementById("team").value = st.team.join(", ");
+pdfKunde.onclick=()=>{
+  let c=st.k[selK.value];
+  let html=`<h2>Arbeitsbericht</h2><b>${c.n}</b><br>KW ${st.kw}<pre>${JSON.stringify(c.h,null,2)}</pre><script>print()</script>`;
+  printHTML(html);
+};
 
-    document.getElementById("selMonteur").innerHTML = st.team.map(function(n,i){return "<option value='"+i+"'>"+escapeHtml(n)+"</option>"}).join("");
+btnWeek.onclick=()=>{
+  let html=`<h2>Wochenbericht</h2>KW ${st.kw}<script>print()</script>`;
+  printHTML(html);
+};
 
-    var opts=""; for(var i=0;i<st.k.length;i++){ opts+="<option value='"+i+"'>"+String(i+1).padStart(2,"0")+" — "+escapeHtml(st.k[i].n||"Kunde")+"</option>"; }
-    if(!opts){ st.k=[newK()]; opts="<option value='0'>01 — Kunde</option>"; }
-    document.getElementById("sel").innerHTML = opts; document.getElementById("sel2").innerHTML = opts;
+btnMonteur.onclick=()=>{
+  let m=selMonteur.value;
+  let html=`<h2>Monteur ${st.team[m]}</h2><script>print()</script>`;
+  printHTML(html);
+};
 
-    var html = ""; for(var j=0;j<st.k.length;j++){ html += kundenCard(j); }
-    document.getElementById("kunden").innerHTML = html;
-
-    renderOverview();
-    setSel(lastSel);
-    attachDelegatesOnce();
-
-    setTimeout(function(){
-      document.querySelectorAll("#kunden tr[data-r]").forEach(function(tr){
-        var i = parseInt(tr.closest(".card").id.replace("k",""),10);
-        var r = parseInt(tr.getAttribute("data-r"),10);
-        updateRowSum(i,r);
-      });
-    },0);
-  }
-
-  function attachDelegatesOnce(){
-    if(delegatesAttached) return; delegatesAttached=true;
-
-    document.getElementById("kw").addEventListener("input",function(){st.kw=this.value;save();});
-    document.getElementById("zr").addEventListener("input",function(){st.zr=this.value;save();});
-    document.getElementById("sun").addEventListener("change",function(){toggleSun(this.value);});
-    document.getElementById("btnApplyTeam").addEventListener("click",applyTeam);
-
-    document.getElementById("btnWeeklyAll").addEventListener("click",printWeeklyAll);
-    document.getElementById("btnWeeklyMonteur").addEventListener("click",function(){var r=parseInt(document.getElementById("selMonteur").value||"0",10)||0; printMonteurWeekly(r);});
-    document.getElementById("btnWipe").addEventListener("click",function(){if(confirm("Alle gespeicherten Daten löschen?")){try{localStorage.removeItem(KEY);}catch(e){} location.reload();}});
-
-    document.getElementById("btnAddK").addEventListener("click",addKunde);
-    document.getElementById("btnRemK").addEventListener("click",remKunde);
-    document.getElementById("sel").addEventListener("change",function(){setSel(this.value);});
-    document.getElementById("btnScroll").addEventListener("click",scrollSel);
-
-    document.getElementById("sel2").addEventListener("change",function(){setSel(this.value);});
-    document.getElementById("btnScroll2").addEventListener("click",scrollSel);
-    document.getElementById("btnPdfArbeitsbericht").addEventListener("click",function(){printK(lastSel);});
-    document.getElementById("btnAllReports").addEventListener("click",generateAllPdf);
-
-    var kc=document.getElementById("kunden");
-    kc.addEventListener("input",function(e){
-      var t=e.target;
-      if(t.matches("td.hcell input")){ setH(+t.dataset.i,+t.dataset.r,+t.dataset.d,t.value); return; }
-      if(t.matches("[data-action='setF']")){ setF(+t.dataset.i,t.dataset.f,t.value); return; }
-      if(t.dataset.f && t.dataset.m!==undefined){ setM(+t.dataset.i,+t.dataset.m,t.dataset.f,t.value); return; }
-    });
-    kc.addEventListener("click",function(e){
-      var b=e.target.closest("button[data-action]"); if(!b) return;
-      var act=b.dataset.action, i=+b.dataset.i;
-      if(act==="addM") addM(i);
-      else if(act==="delM") delM(i,+b.dataset.m);
-      else if(act==="printK") printK(i);
-    });
-  }
-
-  function pdfHeader(title){return "<div style='margin-bottom:4px;font-weight:700'>"+title+"</div>";}
-  function writePrint(html){var fr=document.getElementById("printFrame"); var win=fr.contentWindow||fr; var doc=win.document; doc.open(); doc.write(html); doc.close();}
-
-  // existing inline PDF single-customer functions kept for compatibility (printK/printWeeklyAll/printMonteurWeekly)
-  function printK(i){
-    var c=st.k[i];
-    var head=st.tage.map(function(t){return "<th>"+t+"</th>"}).join("");
-    var rows="";
-    for(var r=0;r<st.team.length;r++){
-      var sum=0,cells="";
-      for(var d=0; d<st.tage.length; d++){
-        var raw = c.h[r] ? (c.h[r][d]||"") : "";
-        if(raw === "U"){ cells += "<td>U (Urlaub)</td>"; } else { var n = parseFloat(raw)||0; sum += n; cells += "<td>"+n.toFixed(2)+"</td>"; }
-      }
-      rows += "<tr><th style='text-align:left'>"+escapeHtml(st.team[r])+"</th>"+cells+"<td><b>"+sum.toFixed(2)+"</b></td></tr>";
-    }
-    var mats=""; for(var m=0;m<c.m.length;m++){var it=c.m[m]; mats+="<tr><td>"+escapeHtml(it.b||"")+"</td><td>"+escapeHtml(it.s||"")+"</td><td>"+escapeHtml(it.r||"")+"</td></tr>";}
-    if(!mats) mats="<tr><td colspan='3' style='text-align:center;color:#666'>—</td></tr>";
-    var html="<!doctype html><html><head><meta charset='utf-8'><title>Arbeitsbericht</title>"+
-      "<style>body{font:12px/1.4 system-ui,Segoe UI,Roboto,Arial;padding:18px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #777;padding:5px;text-align:center}.meta td{border:none;text-align:left;padding:2px 0}.signature{height:50px;border-top:1px solid #777;margin-top:20px}@page{size:A4;margin:14mm}</style></head><body>"+
-      pdfHeader("Arbeitsbericht")+
-      "<div><b>KW:</b> "+escapeHtml(st.kw)+" &nbsp; <b>Zeitraum:</b> "+escapeHtml(st.zr)+"</div>"+
-      "<table class='meta'><tr><td><b>Kunde:</b> "+escapeHtml(c.n||"")+"</td></tr><tr><td><b>Adresse:</b> "+escapeHtml(c.a||"")+"</td></tr></table>"+
-      "<h3>Auszuführende Arbeit</h3><div>"+escapeHtml(c.az||"").replace(/\n/g,"<br>")+"</div>"+
-      "<h3>Ausgeführte Arbeit</h3><div>"+escapeHtml(c.ag||"").replace(/\n/g,"<br>")+"</div>"+
-      "<h3>Stunden</h3><table><thead><tr><th>Monteur</th>"+head+"<th>Woche gesamt</th></tr></thead><tbody>"+rows+"</tbody></table>"+
-      "<h3>Materialverbrauch</h3><table><thead><tr><th>Material</th><th>Stückzahl</th><th>Bemerkung</th></tr></thead><tbody>"+mats+"</tbody></table>"+
-      "<div style='display:flex;gap:40px;margin-top:24px'><div style='flex:1'><div>Ort, Datum: __________________</div><div class='signature'></div><div>Unterschrift Kunde</div></div><div style='flex:1'><div>Ort, Datum: __________________</div><div class='signature'></div><div>Unterschrift Monteur</div></div></div>"+
-      "<script>onload=function(){print()}<\/script></body></html>";
-    writePrint(html);
-  }
-
-  function printWeeklyAll(){ /* preserved earlier function for backward compatibility */ 
-    var grid=st.team.map(function(){return st.tage.map(function(){return 0;});});
-    var lines=[];
-    for(var k=0;k<st.k.length;k++){
-      var c=st.k[k];
-      for(var r=0;r<st.team.length;r++){
-        for(var d=0;d<st.tage.length;d++){
-          var raw = c.h[r] ? (c.h[r][d]||"") : "";
-          var h = (raw === "U") ? 0 : (parseFloat(raw)||0);
-          grid[r][d] += h;
-          if(raw === "U"){ lines.push({tag:st.tage[d], kunde:c.n||"", monteur:st.team[r], stunden:0, vacation:true}); }
-          else if(h>0){ lines.push({tag:st.tage[d], kunde:c.n||"", monteur:st.team[r], stunden:h, vacation:false}); }
-        }
-      }
-    }
-    var head=st.tage.map(function(t){return "<th>"+t+"</th>"}).join("");
-    var rows="";
-    for(var r=0;r<st.team.length;r++){
-      var w=0,cells="";
-      for(var d=0;d<st.tage.length;d++){w+=grid[r][d]; cells+="<td>"+grid[r][d].toFixed(2)+"</td>";}
-      rows+="<tr><th style='text-align:left'>"+escapeHtml(st.team[r])+"</th>"+cells+"<td><b>"+w.toFixed(2)+"</b></td></tr>";
-    }
-    var lrows = lines.map(function(x){return "<tr><td>"+x.tag+"</td><td>"+escapeHtml(x.kunde)+"</td><td>"+escapeHtml(x.monteur)+"</td><td>"+(x.vacation ? "U (Urlaub)" : x.stunden.toFixed(2))+"</td></tr>";}).join("");
-    if(!lrows) lrows = "<tr><td colspan='4' style='text-align:center;color:#666'>—</td></tr>";
-    var html="<!doctype html><html><head><meta charset='utf-8'><title>Wochenbericht</title>"+
-      "<style>body{font:12px/1.4 system-ui,Segoe UI,Roboto,Arial;padding:18px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #777;padding:5px;text-align:center}@page{size:A4;margin:14mm}</style></head><body>"+
-      pdfHeader("Wochenbericht (alle Kunden)")+
-      "<div><b>KW:</b> "+escapeHtml(st.kw)+" &nbsp; <b>Zeitraum:</b> "+escapeHtml(st.zr)+"</div>"+
-      "<h3>Summen je Monteur / Tag</h3><table><thead><tr><th>Monteur</th>"+head+"<th>Woche gesamt</th></tr></thead><tbody>"+rows+"</tbody></table>"+
-      "<h3 style='margin-top:14px'>Detail (Tag / Kunde / Monteur)</h3><table><thead><tr><th>Tag</th><th>Kunde</th><th>Monteur</th><th>Stunden</th></tr></thead><tbody>"+lrows+"</tbody></table>"+
-      "<script>onload=function(){print()}<\/script></body></html>";
-    writePrint(html);
-  }
-
-  function printMonteurWeekly(r){
-    var name = st.team[r] || ("Monteur "+(r+1));
-    var head = st.tage.map(function(t){return "<th>"+t+"</th>"}).join("");
-    var cells = "", wsum = 0, lines = [];
-    for(var d=0; d<st.tage.length; d++){
-      var s = 0;
-      for(var k=0; k<st.k.length; k++){
-        var c = st.k[k];
-        var raw = c.h[r] ? (c.h[r][d]||"") : "";
-        if(raw === "U"){ lines.push({tag:st.tage[d], kunde:c.n||"", stunden:0, vacation:true}); }
-        else { var h = parseFloat(raw)||0; if(h>0) lines.push({tag:st.tage[d], kunde:c.n||"", stunden:h, vacation:false}); s+=h; }
-      }
-      wsum += s;
-      cells += "<td>"+s.toFixed(2)+"</td>";
-    }
-    var row = "<tr><th style='text-align:left'>"+escapeHtml(name)+"</th>"+cells+"<td><b>"+wsum.toFixed(2)+"</b></td></tr>";
-    var lrows = lines.map(function(x){return "<tr><td>"+x.tag+"</td><td>"+escapeHtml(x.kunde)+"</td><td>"+(x.vacation ? "U (Urlaub)" : x.stunden.toFixed(2))+"</td></tr>";}).join("");
-    if(!lrows) lrows = "<tr><td colspan='3' style='text-align:center;color:#666'>—</td></tr>";
-    var html="<!doctype html><html><head><meta charset='utf-8'><title>Wochenbericht Monteur</title>"+
-      "<style>body{font:12px/1.4 system-ui,Segoe UI,Roboto,Arial;padding:18px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #777;padding:5px;text-align:center}@page{size:A4;margin:14mm}</style></head><body>"+
-      pdfHeader("Wochenbericht (Monteur) — "+escapeHtml(name))+
-      "<div><b>KW:</b> "+escapeHtml(st.kw)+" &nbsp; <b>Zeitraum:</b> "+escapeHtml(st.zr)+"</div>"+
-      "<h3>Summen je Tag</h3><table><thead><tr><th>Monteur</th>"+head+"<th>Woche gesamt</th></tr></thead><tbody>"+row+"</tbody></table>"+
-      "<h3 style='margin-top:14px'>Detail (Tag / Kunde)</h3><table><thead><tr><th>Tag</th><th>Kunde</th><th>Stunden</th></tr></thead><tbody>"+lrows+"</tbody></table>"+
-      "<script>onload=function(){print()}<\/script></body></html>";
-    writePrint(html);
-  }
-
-  // ============================
-  // NEW: generateAllPdf -> combines all customers into one PDF file (using jsPDF + autotable)
-  // ============================
-  function formatDateForFilename(d){
-    function z(n){return n<10?"0"+n:n;}
-    return d.getFullYear()+"-"+z(d.getMonth()+1)+"-"+z(d.getDate());
-  }
-
-  function generateAllPdf(){
-    try{
-      // Create document (A4 portrait)
-      var doc = new jsPDF({unit:'mm', format:'a4'});
-      var pageWidth = doc.internal.pageSize.getWidth();
-      var margin = 14;
-      var y = 14;
-
-      // Header on first page
-      function addDocHeader(title){
-        doc.setFontSize(14);
-        doc.setFont("helvetica","bold");
-        doc.text(title, margin, y);
-        doc.setFontSize(10);
-        doc.setFont("helvetica","normal");
-        doc.text("KW: " + (st.kw||"") + "   Zeitraum: " + (st.zr||""), margin, y+6);
-        y += 12;
-      }
-
-      // For each customer: add heading, tasks, hours table, material table, signature area, then addPage()
-      st.k.forEach(function(c, idx){
-        if(idx>0) { doc.addPage(); y = margin; }
-        addDocHeader("Arbeitsbericht – Kunde " + String(idx+1).padStart(2,"0"));
-        // Kunde / Adresse
-        doc.setFontSize(11);
-        doc.setFont("helvetica","bold");
-        doc.text("Kunde:", margin, y); doc.setFont("helvetica","normal");
-        doc.text((c.n||""), margin+18, y); y += 7;
-        doc.setFont("helvetica","bold"); doc.text("Adresse:", margin, y); doc.setFont("helvetica","normal");
-        doc.text((c.a||""), margin+18, y); y += 10;
-
-        // Auszuführende / Ausgeführte Arbeit (multi-line)
-        doc.setFont("helvetica","bold"); doc.text("Auszuführende Arbeit:", margin, y); y+=6;
-        doc.setFont("helvetica","normal");
-        var azLines = doc.splitTextToSize((c.az||""), pageWidth - margin*2);
-        doc.text(azLines, margin, y);
-        y += azLines.length*6 + 4;
-
-        doc.setFont("helvetica","bold"); doc.text("Ausgeführte Arbeit:", margin, y); y+=6;
-        doc.setFont("helvetica","normal");
-        var agLines = doc.splitTextToSize((c.ag||""), pageWidth - margin*2);
-        doc.text(agLines, margin, y);
-        y += agLines.length*6 + 6;
-
-        // Stunden-Tabelle (Monteur x Tage)
-        var columns = [{header: 'Monteur', dataKey: 'monteur'}];
-        st.tage.forEach(function(t,i){ columns.push({header: t, dataKey: 'd'+i}); });
-        columns.push({header: 'Woche gesamt', dataKey: 'sum'});
-        // rows:
-        var rows = [];
-        for(var r=0;r<st.team.length;r++){
-          var row = { monteur: st.team[r] };
-          var sum = 0;
-          for(var d=0; d<st.tage.length; d++){
-            var raw = c.h[r] ? (c.h[r][d]||"") : "";
-            if(raw === "U"){ row['d'+d] = "U (Urlaub)"; }
-            else { var n = parseFloat(raw)||0; row['d'+d] = (n===0) ? "0.00" : n.toFixed(2); sum += n; }
-          }
-          row.sum = sum.toFixed(2);
-          rows.push(row);
-        }
-
-        // Use autoTable for hours
-        doc.autoTable({
-          startY: y,
-          head: [ columns.map(function(c){return c.header}) ],
-          body: rows.map(function(r){ return columns.map(function(c){ return r[c.dataKey]; }); }),
-          styles: {fontSize:9, cellPadding:3},
-          headStyles: {fillColor: [242,140,0], textColor:20},
-          theme:'striped',
-          margin: {left:margin, right:margin}
-        });
-        y = doc.lastAutoTable.finalY + 8;
-
-        // Material table
-        doc.setFont("helvetica","bold"); doc.setFontSize(11); doc.text("Materialverbrauch", margin, y); y += 6;
-        var matRows = [];
-        if(Array.isArray(c.m) && c.m.length){
-          c.m.forEach(function(it){ matRows.push([it.b||"", it.s||"", it.r||""]); });
-        }
-        if(matRows.length === 0){ matRows.push(["—","",""]); }
-        doc.autoTable({
-          startY: y,
-          head: [['Material','Stückzahl','Bemerkung']],
-          body: matRows,
-          styles: {fontSize:9, cellPadding:3},
-          headStyles:{fillColor:[220,220,220], textColor:0},
-          margin:{left:margin, right:margin}
-        });
-        y = doc.lastAutoTable.finalY + 12;
-
-        // Signatures
-        var sigY = y;
-        doc.setFontSize(10);
-        doc.text("Ort, Datum: _______________________", margin, sigY);
-        doc.text("Ort, Datum: _______________________", pageWidth/2 + 10, sigY);
-        sigY += 30;
-        doc.text("Unterschrift Kunde", margin, sigY);
-        doc.text("Unterschrift Monteur", pageWidth/2 + 10, sigY);
-      });
-
-      // Optional: add a summary page at the end (Summen je Monteur / Tag)
-      // Build summary table
-      var grid = st.team.map(function(){ return st.tage.map(function(){ return 0; }); });
-      for(var k=0;k<st.k.length;k++){
-        var c = st.k[k];
-        for(var r=0;r<st.team.length;r++){
-          for(var d=0; d<st.tage.length; d++){
-            var v = c.h[r] ? (c.h[r][d]||0) : 0;
-            if(v === "U") v = 0;
-            var n = parseFloat(v)||0;
-            grid[r][d] += n;
-          }
-        }
-      }
-      // add page for summary
-      doc.addPage();
-      var y2 = margin;
-      doc.setFontSize(14); doc.setFont("helvetica","bold");
-      doc.text("Gesamtübersicht – Summen je Monteur / Tag", margin, y2); y2 += 10;
-      doc.setFontSize(10); doc.setFont("helvetica","normal");
-      doc.text("KW: " + (st.kw||"") + "   Zeitraum: " + (st.zr||""), margin, y2); y2 += 8;
-      // build columns
-      var sumHead = ['Monteur'].concat(st.tage).concat(['Woche gesamt']);
-      var sumBody = [];
-      for(var r=0;r<st.team.length;r++){
-        var row = [st.team[r]];
-        var w = 0;
-        for(var d=0; d<st.tage.length; d++){ row.push(grid[r][d].toFixed(2)); w += grid[r][d]; }
-        row.push(w.toFixed(2));
-        sumBody.push(row);
-      }
-      doc.autoTable({
-        startY: y2,
-        head: [sumHead],
-        body: sumBody,
-        styles: {fontSize:9, cellPadding:3},
-        headStyles: {fillColor:[242,140,0], textColor:20},
-        margin:{left:margin, right:margin}
-      });
-
-      // Save file
-      var filename = "Welsing_Arbeitsberichte_" + formatDateForFilename(new Date()) + ".pdf";
-      doc.save(filename);
-    }catch(err){
-      alert("Fehler beim Erstellen der PDF: " + (err.message || err));
-      console.error(err);
-    }
-  }
-
-  // expose generateAllPdf for button
-  function newK(){ return {n:"",a:"",az:"",ag:"",h:st.team.map(function(){return st.tage.map(function(){return ""})}),m:[{b:"",s:"",r:""}]}; }
-
-  // Init
-  load(); ensureAtLeastOneKunde(); fixShapes(); render();
+load(); render();
 })();
 </script>
 </body>
