@@ -107,6 +107,21 @@
 
   function escapeHtml(s){return (s||"").toString().replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
   function escapeAttr(s){return (s||"").toString().replace(/&/g,"&amp;").replace(/"/g,"&quot;")}
+  function pad2(n){return (n<10?"0":"")+n;}
+  function formatDate(d){return pad2(d.getDate())+"."+pad2(d.getMonth()+1)+"."+d.getFullYear();}
+  function getIsoWeekInfo(date){
+    var d=new Date(date.getFullYear(),date.getMonth(),date.getDate());
+    var day=(d.getDay()+6)%7;
+    d.setDate(d.getDate()-day+3);
+    var firstThursday=new Date(d.getFullYear(),0,4);
+    var week=1+Math.round(((d-firstThursday)/86400000-3)/7);
+    var year=d.getFullYear();
+    var monday=new Date(date.getFullYear(),date.getMonth(),date.getDate());
+    monday.setDate(monday.getDate()-((monday.getDay()+6)%7));
+    var sunday=new Date(monday); sunday.setDate(monday.getDate()+6);
+    var saturday=new Date(monday); saturday.setDate(monday.getDate()+5);
+    return {week:week,year:year,monday:monday,saturday:saturday,sunday:sunday};
+  }
   function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
   function load(){try{var raw=localStorage.getItem(KEY); if(!raw) return; var o=JSON.parse(raw)||{}; if(o.kw)st.kw=o.kw; if(o.zr)st.zr=o.zr; if(Array.isArray(o.tage)&&o.tage.length)st.tage=o.tage; if(Array.isArray(o.team)&&o.team.length)st.team=o.team; if(Array.isArray(o.k)&&o.k.length)st.k=o.k; if(Array.isArray(o.abs))st.abs=o.abs;}catch(e){}}
 
@@ -238,6 +253,15 @@
 
   function render(){
     fixShapes();
+    if(!st.kw || !st.zr){
+      var info=getIsoWeekInfo(new Date());
+      if(!st.kw) st.kw="KW "+info.week;
+      if(!st.zr){
+        var endDate=st.tage.indexOf("So")>=0 ? info.sunday : info.saturday;
+        st.zr=formatDate(info.monday)+"–"+formatDate(endDate);
+      }
+      save();
+    }
     document.getElementById("kw").value=st.kw;
     document.getElementById("zr").value=st.zr;
     document.getElementById("sun").value=st.tage.indexOf("So")>=0?"1":"0";
