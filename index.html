@@ -29,6 +29,16 @@
   .abs-btn{min-height:34px;padding:6px 8px;font-size:14px;font-weight:700;width:100%}
   .absence-legend{font-size:11px;line-height:1.2}
   .pill{display:inline-block;background:#0f1116;border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:12px}
+  .admin-only{display:inline-flex}
+  body[data-role="monteur"] .admin-only{display:none!important}
+  .auth-only{display:none}
+  body[data-auth="yes"] .auth-only{display:inline-flex}
+  .login-overlay{position:fixed;inset:0;background:rgba(5,6,10,.9);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+  .login-card{background:var(--card);border:1px solid var(--line);border-radius:16px;max-width:360px;width:100%;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+  .login-card h2{margin:0 0 10px 0;font-size:18px}
+  .login-card p{margin:0 0 12px 0;color:var(--muted);font-size:13px}
+  .login-actions{display:flex;gap:8px;align-items:center;margin-top:8px}
+  .login-error{color:#ffb0b0;font-size:12px;min-height:16px}
   .footer{position:sticky;bottom:0;background:#0f1116;border-top:3px solid var(--primary);padding:8px 12px;display:flex;gap:8px;flex-wrap:wrap;z-index:9}
   .footer>*{flex:1 1 48%}
   iframe#printFrame{position:fixed;left:-9999px;top:-9999px;width:0;height:0;border:0}
@@ -43,7 +53,24 @@
 <header>
   <b>Welsing Zeiten</b>
   <div class="ver">v1.6.5 Kompakt + Monteur</div>
+  <button class="btn secondary auth-only" id="btnLogout" style="margin-left:auto">Abmelden</button>
 </header>
+
+<div class="login-overlay" id="loginOverlay" hidden>
+  <div class="login-card">
+    <h2>Anmeldung</h2>
+    <p>Bitte mit Benutzername und Passwort anmelden.</p>
+    <label for="loginUser">Benutzername</label>
+    <input id="loginUser" type="text" autocomplete="username" placeholder="z. B. chef">
+    <div style="height:8px"></div>
+    <label for="loginPass">Passwort</label>
+    <input id="loginPass" type="password" autocomplete="current-password" placeholder="Passwort">
+    <div class="login-error" id="loginError"></div>
+    <div class="login-actions">
+      <button class="btn" id="btnLogin">Anmelden</button>
+    </div>
+  </div>
+</div>
 
 <div class="wrap">
   <div class="card">
@@ -57,11 +84,11 @@
     </div>
     <div class="row" style="margin-top:6px">
       <button class="btn secondary" id="btnApplyTeam">Team übernehmen</button>
-      <button class="btn" id="btnWeeklyAll">Wochenbericht (alle) PDF</button>
-      <button class="btn secondary" id="btnPdfAllK">Alle Arbeitsberichte PDF</button>
+      <button class="btn admin-only" id="btnWeeklyAll">Wochenbericht (alle) PDF</button>
+      <button class="btn secondary admin-only" id="btnPdfAllK">Alle Arbeitsberichte PDF</button>
       <select id="selMonteur" title="Monteur wählen"></select>
       <button class="btn secondary" id="btnWeeklyMonteur">PDF Monteur Woche</button>
-      <button class="btn secondary" id="btnWipe">Daten löschen</button>
+      <button class="btn secondary admin-only" id="btnWipe">Daten löschen</button>
     </div>
   </div>
 
@@ -75,7 +102,7 @@
     <div id="kunden"></div>
   </div>
 
-  <div class="card">
+  <div class="card admin-only" id="overviewCard">
     <div class="row" style="justify-content:space-between;width:100%">
       <b>Wochenübersicht (Summe je Monteur & Tag)</b>
       <span style="color:#bbb">nur zur Kontrolle</span>
@@ -105,6 +132,13 @@
   var KEY="wz_v165_compact_monteur";
   var st={kw:"",zr:"",tage:["Mo","Di","Mi","Do","Fr","Sa"],team:["Kevin","Jacub","Mario","Martin","Tomas"],k:[],abs:[]};
   var lastSel=0, delegatesAttached=false;
+  var AUTH_KEY="wz_auth_session";
+  var auth={user:null,role:null,teamIndex:null};
+  var AUTH_USERS=[
+    {user:"chef",pass:"chef123",role:"admin"},
+    {user:"kevin",pass:"kevin123",role:"monteur"},
+    {user:"mario",pass:"mario123",role:"monteur"}
+  ];
 
   function escapeHtml(s){return (s||"").toString().replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
   function escapeAttr(s){return (s||"").toString().replace(/&/g,"&amp;").replace(/"/g,"&quot;")}
@@ -122,6 +156,62 @@
     var sunday=new Date(monday); sunday.setDate(monday.getDate()+6);
     var saturday=new Date(monday); saturday.setDate(monday.getDate()+5);
     return {week:week,year:year,monday:monday,saturday:saturday,sunday:sunday};
+  }
+  function normalizeName(name){return (name||"").toString().trim().toLowerCase();}
+  function getTeamIndexByName(name){
+    var n=normalizeName(name);
+    for(var i=0;i<st.team.length;i++){
+      if(normalizeName(st.team[i])===n) return i;
+    }
+    return null;
+  }
+  function applyAuthState(){
+    if(auth && auth.user){
+      document.body.dataset.auth="yes";
+      document.body.dataset.role=auth.role||"";
+      auth.teamIndex=auth.role==="monteur" ? getTeamIndexByName(auth.user) : null;
+      document.getElementById("loginOverlay").hidden=true;
+    }else{
+      document.body.dataset.auth="no";
+      document.body.dataset.role="";
+      document.getElementById("loginOverlay").hidden=false;
+    }
+  }
+  function loadAuth(){
+    try{
+      var raw=sessionStorage.getItem(AUTH_KEY);
+      if(raw){
+        var obj=JSON.parse(raw);
+        if(obj && obj.user){
+          auth=obj;
+        }
+      }
+    }catch(e){}
+    applyAuthState();
+  }
+  function saveAuth(){
+    try{
+      sessionStorage.setItem(AUTH_KEY,JSON.stringify(auth));
+    }catch(e){}
+  }
+  function clearAuth(){
+    auth={user:null,role:null,teamIndex:null};
+    try{sessionStorage.removeItem(AUTH_KEY);}catch(e){}
+    applyAuthState();
+  }
+  function tryLogin(user,pass){
+    var u=normalizeName(user);
+    for(var i=0;i<AUTH_USERS.length;i++){
+      var entry=AUTH_USERS[i];
+      if(normalizeName(entry.user)===u && entry.pass===pass){
+        auth={user:entry.user,role:entry.role,teamIndex:null};
+        saveAuth();
+        applyAuthState();
+        render();
+        return true;
+      }
+    }
+    return false;
   }
   function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
   function load(){try{var raw=localStorage.getItem(KEY); if(!raw) return; var o=JSON.parse(raw)||{}; if(o.kw)st.kw=o.kw; if(o.zr)st.zr=o.zr; if(Array.isArray(o.tage)&&o.tage.length)st.tage=o.tage; if(Array.isArray(o.team)&&o.team.length)st.team=o.team; if(Array.isArray(o.k)&&o.k.length)st.k=o.k; if(Array.isArray(o.abs))st.abs=o.abs;}catch(e){}}
@@ -152,12 +242,17 @@
   }
 
   function sanitizeDec(s){s=(s||"").toString().replace(/,/g,".").replace(/[^0-9.]/g,""); var p=s.indexOf("."); if(p>=0) s=s.slice(0,p+1)+s.slice(p+1).replace(/\./g,""); return s;}
-  function setH(i,r,d,v){v=sanitizeDec(v); if(st.k[i]&&st.k[i].h&&st.k[i].h[r]){st.k[i].h[r][d]=v; save(); updateRowSum(i,r); renderOverview();}}
+  function setH(i,r,d,v){
+    if(auth.role==="monteur" && auth.teamIndex!==null && r!==auth.teamIndex) return;
+    v=sanitizeDec(v);
+    if(st.k[i]&&st.k[i].h&&st.k[i].h[r]){st.k[i].h[r][d]=v; save(); updateRowSum(i,r); renderOverview();}
+  }
   function setF(i,f,v){if(st.k[i]){st.k[i][f]=v; save(); renderOverview();}}
   function addM(i){if(st.k[i]){st.k[i].m.push({b:"",s:"",r:""}); save(); render();}}
   function delM(i,m){if(st.k[i]&&st.k[i].m&&st.k[i].m[m]!=null){st.k[i].m.splice(m,1); if(st.k[i].m.length===0) st.k[i].m.push({b:"",s:"",r:""}); save(); render();}}
   function setM(i,m,f,v){if(st.k[i]&&st.k[i].m&&st.k[i].m[m]){st.k[i].m[m][f]=v; save();}}
   function setAbsence(r,d,v){
+    if(auth.role==="monteur" && auth.teamIndex!==null && r!==auth.teamIndex) return;
     if(st.abs[r]){st.abs[r][d]=v; save();}
   }
   function addKunde(){st.k.push(newK()); save(); render(); setSel(st.k.length-1);}
@@ -188,6 +283,7 @@
     var head=st.tage.map(function(t){return "<th>"+t+"</th>"}).join("");
     var rows="";
     for(var r=0;r<st.team.length;r++){
+      if(auth.role==="monteur" && auth.teamIndex!==null && r!==auth.teamIndex) continue;
       var w=0,cells="";
       for(var d=0;d<st.tage.length;d++){w+=grid[r][d]; cells+="<td>"+grid[r][d].toFixed(2)+"</td>";}
       rows+="<tr><th style='text-align:left'>"+escapeHtml(st.team[r])+"</th>"+cells+"<td><b>"+w.toFixed(2)+"</b></td></tr>";
@@ -199,6 +295,7 @@
     var head=st.tage.map(function(t){return "<th>"+t+"</th>"}).join("");
     var rows="";
     for(var r=0;r<st.team.length;r++){
+      if(auth.role==="monteur" && auth.teamIndex!==null && r!==auth.teamIndex) continue;
       rows+="<tr><th style='text-align:left'>"+escapeHtml(st.team[r])+"</th>";
       for(var d=0;d<st.tage.length;d++){
         var v=(st.abs[r] && st.abs[r][d]) || "";
@@ -217,6 +314,7 @@
   function kundenCard(i){
     var c=st.k[i], rows="";
     for(var r=0;r<st.team.length;r++){
+      if(auth.role==="monteur" && auth.teamIndex!==null && r!==auth.teamIndex) continue;
       rows+="<tr data-r='"+r+"'><th style='text-align:left'>"+escapeHtml(st.team[r])+"</th>";
       for(var d=0;d<st.tage.length;d++){
         var v=(c.h[r] && c.h[r][d])||"";
@@ -268,7 +366,15 @@
     document.getElementById("sun").value=st.tage.indexOf("So")>=0?"1":"0";
     document.getElementById("team").value=st.team.join(", ");
 
-    document.getElementById("selMonteur").innerHTML=st.team.map(function(n,i){return "<option value='"+i+"'>"+escapeHtml(n)+"</option>"}).join("");
+    var monteurOptions=st.team.map(function(n,i){return "<option value='"+i+"'>"+escapeHtml(n)+"</option>"}).join("");
+    var selMonteur=document.getElementById("selMonteur");
+    selMonteur.innerHTML=monteurOptions;
+    if(auth.role==="monteur" && auth.teamIndex!==null){
+      selMonteur.value=String(auth.teamIndex);
+      selMonteur.disabled=true;
+    }else{
+      selMonteur.disabled=false;
+    }
 
     var opts=""; for(var i=0;i<st.k.length;i++){opts+="<option value='"+i+"'>"+String(i+1).padStart(2,"0")+" — "+escapeHtml(st.k[i].n||"Kunde")+"</option>";}
     if(!opts){st.k=[newK()]; opts="<option value='0'>01 — Kunde</option>";}
@@ -292,6 +398,26 @@
 
   function attachDelegatesOnce(){
     if(delegatesAttached) return; delegatesAttached=true;
+
+    document.getElementById("btnLogin").addEventListener("click",function(){
+      var user=document.getElementById("loginUser").value;
+      var pass=document.getElementById("loginPass").value;
+      var ok=tryLogin(user,pass);
+      var err=document.getElementById("loginError");
+      if(!ok){
+        err.textContent="Login fehlgeschlagen. Bitte prüfen.";
+      }else{
+        err.textContent="";
+        document.getElementById("loginPass").value="";
+      }
+    });
+    document.getElementById("loginPass").addEventListener("keydown",function(e){
+      if(e.key==="Enter"){document.getElementById("btnLogin").click();}
+    });
+    document.getElementById("btnLogout").addEventListener("click",function(){
+      clearAuth();
+      render();
+    });
 
     document.getElementById("kw").addEventListener("input",function(){st.kw=this.value;save();});
     document.getElementById("zr").addEventListener("input",function(){st.zr=this.value;save();});
@@ -489,6 +615,7 @@
   }
 
   // Init
+  loadAuth();
   load(); ensureAtLeastOneKunde(); fixShapes(); render();
 })();
 </script>
