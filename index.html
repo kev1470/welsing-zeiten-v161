@@ -29,6 +29,8 @@
   .abs-btn{min-height:34px;padding:6px 8px;font-size:14px;font-weight:700;width:100%}
   .absence-legend{font-size:11px;line-height:1.2}
   .pill{display:inline-block;background:#0f1116;border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:12px}
+  .registry-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-left:auto}
+  .registry-actions select{max-width:220px}
   .footer{position:sticky;bottom:0;background:#0f1116;border-top:3px solid var(--primary);padding:8px 12px;display:flex;gap:8px;flex-wrap:wrap;z-index:9}
   .footer>*{flex:1 1 48%}
   iframe#printFrame{position:fixed;left:-9999px;top:-9999px;width:0;height:0;border:0}
@@ -75,7 +77,7 @@
     <div id="kunden"></div>
   </div>
 
-  <div class="card">
+  <div class="card" id="overviewCard">
     <div class="row" style="justify-content:space-between;width:100%">
       <b>Wochenübersicht (Summe je Monteur & Tag)</b>
       <span style="color:#bbb">nur zur Kontrolle</span>
@@ -103,7 +105,7 @@
 <script>
 (function(){
   var KEY="wz_v165_compact_monteur";
-  var st={kw:"",zr:"",tage:["Mo","Di","Mi","Do","Fr","Sa"],team:["Kevin","Jacub","Mario","Martin","Tomas"],k:[],abs:[]};
+  var st={kw:"",zr:"",tage:["Mo","Di","Mi","Do","Fr","Sa"],team:["Kevin","Jacub","Mario","Martin","Tomas"],k:[],abs:[],reg:[]};
   var lastSel=0, delegatesAttached=false;
 
   function escapeHtml(s){return (s||"").toString().replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
@@ -123,13 +125,23 @@
     var saturday=new Date(monday); saturday.setDate(monday.getDate()+5);
     return {week:week,year:year,monday:monday,saturday:saturday,sunday:sunday};
   }
+  function normalizeText(value){return (value||"").toString().trim().toLowerCase();}
+  function findRegistryIndex(name,address){
+    var n=normalizeText(name);
+    var a=normalizeText(address);
+    for(var i=0;i<st.reg.length;i++){
+      if(normalizeText(st.reg[i].n)===n && normalizeText(st.reg[i].a)===a) return i;
+    }
+    return -1;
+  }
   function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
-  function load(){try{var raw=localStorage.getItem(KEY); if(!raw) return; var o=JSON.parse(raw)||{}; if(o.kw)st.kw=o.kw; if(o.zr)st.zr=o.zr; if(Array.isArray(o.tage)&&o.tage.length)st.tage=o.tage; if(Array.isArray(o.team)&&o.team.length)st.team=o.team; if(Array.isArray(o.k)&&o.k.length)st.k=o.k; if(Array.isArray(o.abs))st.abs=o.abs;}catch(e){}}
+  function load(){try{var raw=localStorage.getItem(KEY); if(!raw) return; var o=JSON.parse(raw)||{}; if(o.kw)st.kw=o.kw; if(o.zr)st.zr=o.zr; if(Array.isArray(o.tage)&&o.tage.length)st.tage=o.tage; if(Array.isArray(o.team)&&o.team.length)st.team=o.team; if(Array.isArray(o.k)&&o.k.length)st.k=o.k; if(Array.isArray(o.abs))st.abs=o.abs; if(Array.isArray(o.reg))st.reg=o.reg;}catch(e){}}
 
   function newK(){return {n:"",a:"",az:"",ag:"",h:st.team.map(function(){return st.tage.map(function(){return ""})}),m:[{b:"",s:"",r:""}]};}
   function ensureAtLeastOneKunde(){if(!Array.isArray(st.k)||st.k.length===0){st.k=[newK()];}}
   function fixShapes(){
     ensureAtLeastOneKunde();
+    if(!Array.isArray(st.reg)) st.reg=[];
     for(var i=0;i<st.k.length;i++){
       var c=st.k[i]; if(!Array.isArray(c.h)) c.h=[];
       while(c.h.length<st.team.length) c.h.push(st.tage.map(function(){return ""}));
@@ -152,13 +164,40 @@
   }
 
   function sanitizeDec(s){s=(s||"").toString().replace(/,/g,".").replace(/[^0-9.]/g,""); var p=s.indexOf("."); if(p>=0) s=s.slice(0,p+1)+s.slice(p+1).replace(/\./g,""); return s;}
-  function setH(i,r,d,v){v=sanitizeDec(v); if(st.k[i]&&st.k[i].h&&st.k[i].h[r]){st.k[i].h[r][d]=v; save(); updateRowSum(i,r); renderOverview();}}
+  function setH(i,r,d,v){
+    v=sanitizeDec(v);
+    if(st.k[i]&&st.k[i].h&&st.k[i].h[r]){st.k[i].h[r][d]=v; save(); updateRowSum(i,r); renderOverview();}
+  }
   function setF(i,f,v){if(st.k[i]){st.k[i][f]=v; save(); renderOverview();}}
   function addM(i){if(st.k[i]){st.k[i].m.push({b:"",s:"",r:""}); save(); render();}}
   function delM(i,m){if(st.k[i]&&st.k[i].m&&st.k[i].m[m]!=null){st.k[i].m.splice(m,1); if(st.k[i].m.length===0) st.k[i].m.push({b:"",s:"",r:""}); save(); render();}}
   function setM(i,m,f,v){if(st.k[i]&&st.k[i].m&&st.k[i].m[m]){st.k[i].m[m][f]=v; save();}}
   function setAbsence(r,d,v){
     if(st.abs[r]){st.abs[r][d]=v; save();}
+  }
+  function saveToRegistry(i){
+    if(!st.k[i]) return;
+    var name=(st.k[i].n||"").trim();
+    var address=(st.k[i].a||"").trim();
+    if(!name) return;
+    var idx=findRegistryIndex(name,address);
+    if(idx>=0){
+      st.reg[idx]={n:name,a:address};
+    }else{
+      st.reg.push({n:name,a:address});
+    }
+    save();
+    render();
+  }
+  function applyFromRegistry(i){
+    var sel=document.getElementById("regsel"+i);
+    if(!sel) return;
+    var idx=parseInt(sel.value,10);
+    if(isNaN(idx) || !st.reg[idx]) return;
+    st.k[i].n=st.reg[idx].n;
+    st.k[i].a=st.reg[idx].a;
+    save();
+    render();
   }
   function addKunde(){st.k.push(newK()); save(); render(); setSel(st.k.length-1);}
   function remKunde(){if(st.k.length<=1){alert("Mindestens 1 Kunde.");return} st.k.splice(lastSel,1); if(lastSel>=st.k.length) lastSel=st.k.length-1; save(); render(); setSel(lastSel);}
@@ -224,6 +263,13 @@
       }
       rows+="<td class='sum-cell'><b>0.00</b></td></tr>";
     }
+    var regOptions="<option value=''>Kunde wählen…</option>";
+    for(var ri=0;ri<st.reg.length;ri++){
+      var regName=st.reg[ri].n||"";
+      var regAddr=st.reg[ri].a||"";
+      var regLabel=regName+(regAddr?" — "+regAddr:"");
+      regOptions+="<option value='"+ri+"'>"+escapeHtml(regLabel)+"</option>";
+    }
     var mats="";
     for(var m=0;m<c.m.length;m++){
       var it=c.m[m];
@@ -235,7 +281,12 @@
     if(!mats) mats="<tr><td colspan='4' style='text-align:center;color:#666'>—</td></tr>";
     return "<div class='card' id='k"+i+"'>"+
       "<div class='row'><span class='pill'>Kunde "+String(i+1).padStart(2,"0")+"</span>"+
-      "<button class='btn' data-action='printK' data-i='"+i+"' style='margin-left:auto'>PDF Arbeitsbericht</button></div>"+
+      "<div class='registry-actions'>"+
+        "<select id='regsel"+i+"' data-i='"+i+"'>"+regOptions+"</select>"+
+        "<button class='btn secondary' data-action='applyReg' data-i='"+i+"'>Übernehmen</button>"+
+        "<button class='btn secondary' data-action='saveReg' data-i='"+i+"'>Im Register speichern</button>"+
+      "</div>"+
+      "<button class='btn' data-action='printK' data-i='"+i+"'>PDF Arbeitsbericht</button></div>"+
       "<div class='grid cols2' style='margin-top:6px'>"+
         "<div><label>Name</label><input type='text' value='"+escapeAttr(c.n)+"' data-action='setF' data-i='"+i+"' data-f='n'></div>"+
         "<div><label>Adresse</label><input type='text' value='"+escapeAttr(c.a)+"' data-action='setF' data-i='"+i+"' data-f='a'></div>"+
@@ -325,6 +376,8 @@
       if(act==="addM") addM(i);
       else if(act==="delM") delM(i,+b.dataset.m);
       else if(act==="printK") printK(i);
+      else if(act==="saveReg") saveToRegistry(i);
+      else if(act==="applyReg") applyFromRegistry(i);
     });
 
     var ab=document.getElementById("absence");
@@ -355,8 +408,8 @@
       pdfHeader("Arbeitsbericht")+
       "<div><b>KW:</b> "+escapeHtml(st.kw)+" &nbsp; <b>Zeitraum:</b> "+escapeHtml(st.zr)+"</div>"+
       "<table class='meta'><tr><td><b>Kunde:</b> "+escapeHtml(c.n||"")+"</td></tr><tr><td><b>Adresse:</b> "+escapeHtml(c.a||"")+"</td></tr></table>"+
-      "<h3>Auszuführende Arbeit</h3><div>"+escapeHtml(c.az||"").replace(/\\n/g,"<br>")+"</div>"+
-      "<h3>Ausgeführte Arbeit</h3><div>"+escapeHtml(c.ag||"").replace(/\\n/g,"<br>")+"</div>"+
+      "<h3>Auszuführende Arbeit</h3><div>"+escapeHtml(c.az||"").replace(/\n/g,"<br>")+"</div>"+
+      "<h3>Ausgeführte Arbeit</h3><div>"+escapeHtml(c.ag||"").replace(/\n/g,"<br>")+"</div>"+
       "<h3>Stunden</h3><table><thead><tr><th>Monteur</th>"+head+"<th>Woche gesamt</th></tr></thead><tbody>"+rows+"</tbody></table>"+
       "<h3>Materialverbrauch</h3><table><thead><tr><th>Material</th><th>Stückzahl</th><th>Bemerkung</th></tr></thead><tbody>"+mats+"</tbody></table>"+
       "<div style='display:flex;gap:40px;margin-top:24px'><div style='flex:1'><div>Ort, Datum: __________________</div><div class='signature'></div><div>Unterschrift Kunde</div></div><div style='flex:1'><div>Ort, Datum: __________________</div><div class='signature'></div><div>Unterschrift Monteur</div></div></div>"+
