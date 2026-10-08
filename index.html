@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Welsing Zeiten – v1.6.5 Kompakt + Monteur (stabil)</title>
+<title>Welsing Zeiten – v1.6.6 Kompakt + Spracheingabe</title>
 <meta name="theme-color" content="#E2231A">
 <style>
   :root{--bg:#0b0c10;--card:#15171c;--ink:#fff;--muted:#c7c7c9;--accent:#F28C00;--accent-ink:#1a1300;--primary:#E2231A;--line:#2a2e36;--focus:#FBB040}
@@ -38,13 +38,18 @@
   .hcell input::placeholder{color:#666}
   .hscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
   .hscroll table{min-width:640px}
+  .speech-tools{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .speech-tools select{width:auto;max-width:100%}
+  .speech-note{font-size:12px;color:var(--muted);margin:6px 0}
+  .speech-status{font-size:13px;min-height:1.4em;color:var(--focus);white-space:pre-wrap}
+  .btn:disabled{opacity:.55;cursor:not-allowed}
   @media(max-width:720px){th,td{padding:4px}.btn{padding:8px 10px}.hscroll table{min-width:560px}}
 </style>
 </head>
 <body>
 <header>
   <b>Welsing Zeiten</b>
-  <div class="ver">v1.6.5 Kompakt + Monteur</div>
+  <div class="ver">v1.6.6 + Spracheingabe</div>
 </header>
 
 <div class="wrap">
@@ -59,6 +64,7 @@
     </div>
     <div class="row" style="margin-top:6px">
       <button class="btn secondary" id="btnApplyTeam">Team übernehmen</button>
+      <button class="btn secondary" id="btnCurrentWeek">Aktuelle Woche einstellen</button>
       <button class="btn" id="btnWeeklyAll">Wochenbericht (alle) PDF</button>
       <button class="btn secondary" id="btnPdfAllK">Alle Arbeitsberichte PDF</button>
       <select id="selMonteur" title="Monteur wählen"></select>
@@ -107,23 +113,151 @@
   var KEY="wz_v165_compact_monteur";
   var st={kw:"",zr:"",tage:["Mo","Di","Mi","Do","Fr","Sa"],team:["Kevin","Jacub","Mario","Martin","Tomas"],k:[],abs:[],reg:[]};
   var lastSel=0, delegatesAttached=false;
+  var speechSession=null;
+  var SpeechRecognition=window.SpeechRecognition || window.webkitSpeechRecognition;
 
   function escapeHtml(s){return (s||"").toString().replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
-  function escapeAttr(s){return (s||"").toString().replace(/&/g,"&amp;").replace(/"/g,"&quot;")}
+  function escapeAttr(s){return (s||"").toString().replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/'/g,"&#39;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
   function pad2(n){return (n<10?"0":"")+n;}
   function formatDate(d){return pad2(d.getDate())+"."+pad2(d.getMonth()+1)+"."+d.getFullYear();}
   function getIsoWeekInfo(date){
-    var d=new Date(date.getFullYear(),date.getMonth(),date.getDate());
-    var day=(d.getDay()+6)%7;
-    d.setDate(d.getDate()-day+3);
-    var firstThursday=new Date(d.getFullYear(),0,4);
-    var week=1+Math.round(((d-firstThursday)/86400000-3)/7);
-    var year=d.getFullYear();
+    // ISO week: Thursday determines the week-year. UTC avoids DST offsets.
+    var d=new Date(Date.UTC(date.getFullYear(),date.getMonth(),date.getDate()));
+    d.setUTCDate(d.getUTCDate()+4-(d.getUTCDay()||7));
+    var year=d.getUTCFullYear();
+    var week=Math.ceil((((d-new Date(Date.UTC(year,0,1)))/86400000)+1)/7);
     var monday=new Date(date.getFullYear(),date.getMonth(),date.getDate());
     monday.setDate(monday.getDate()-((monday.getDay()+6)%7));
     var sunday=new Date(monday); sunday.setDate(monday.getDate()+6);
     var saturday=new Date(monday); saturday.setDate(monday.getDate()+5);
     return {week:week,year:year,monday:monday,saturday:saturday,sunday:sunday};
+  }
+  function setCurrentWeek(){
+    var info=getIsoWeekInfo(new Date());
+    st.kw="KW "+info.week;
+    st.zr=formatDate(info.monday)+"–"+formatDate(st.tage.indexOf("So")>=0?info.sunday:info.saturday);
+  }
+  function wipeData(){
+    if(!confirm("Alle gespeicherten Daten einschließlich Kundenregister löschen und die aktuelle Woche einstellen?")) return;
+    cancelSpeech();
+    st={kw:"",zr:"",tage:["Mo","Di","Mi","Do","Fr","Sa"],team:["Kevin","Jacub","Mario","Martin","Tomas"],k:[],abs:[],reg:[]};
+    lastSel=0;
+    setCurrentWeek();
+    fixShapes();
+    save();
+    render();
+  }
+
+  function speechNotice(i,message){
+    var el=document.getElementById("speechStatus"+i);
+    if(el) el.textContent=message;
+  }
+  function refreshSpeechUI(){
+    for(var i=0;i<st.k.length;i++){
+      var active=speechSession && speechSession.customer===st.k[i];
+      var button=document.getElementById("speechButton"+i);
+      var language=document.getElementById("speechLang"+i);
+      if(button){
+        button.disabled=!SpeechRecognition || window.isSecureContext===false || (!!speechSession && !active);
+        button.textContent=active?(speechSession.stopping?"Wird beendet …":"■ Diktat beenden"):"🎤 Diktieren";
+        button.setAttribute("aria-pressed",active?"true":"false");
+      }
+      if(language) language.disabled=!!active;
+      if(active) speechNotice(i,speechSession.message);
+    }
+  }
+  function cancelSpeech(){
+    if(!speechSession) return;
+    var session=speechSession;
+    speechSession=null; // Ignore delayed events after deletion/reset.
+    try{session.recognition.abort();}catch(e){}
+    refreshSpeechUI();
+  }
+  function startSpeech(i){
+    if(speechSession){
+      if(speechSession.customer===st.k[i] && !speechSession.stopping){
+        speechSession.stopping=true;
+        speechSession.message="Diktat wird abgeschlossen …";
+        try{speechSession.recognition.stop();}catch(e){cancelSpeech();}
+        refreshSpeechUI();
+      }
+      return;
+    }
+    if(!SpeechRecognition || window.isSecureContext===false) return;
+    var customer=st.k[i];
+    var lang=customer.speechLang || "de-DE";
+    var recognition=new SpeechRecognition();
+    var session={customer:customer,recognition:recognition,message:"Mikrofon wird gestartet …",stopping:false,received:false,error:false};
+    speechSession=session;
+    recognition.lang=lang;
+    recognition.continuous=true;
+    recognition.interimResults=true;
+    function notice(message){
+      session.message=message;
+      var index=st.k.indexOf(customer);
+      if(index>=0) speechNotice(index,message);
+    }
+    recognition.onstart=function(){
+      if(speechSession!==session) return;
+      notice("Ich höre zu. Zum Abschließen auf „Diktat beenden“ tippen.");
+    };
+    recognition.onresult=function(event){
+      if(speechSession!==session || st.k.indexOf(customer)<0) return;
+      var finalText="", interim="";
+      for(var j=event.resultIndex;j<event.results.length;j++){
+        var result=event.results[j];
+        if(result.isFinal) finalText+=result[0].transcript+" ";
+        else interim+=result[0].transcript;
+      }
+      finalText=finalText.trim();
+      if(finalText){
+        var current=customer.ag || "";
+        customer.ag=current+(current && !/\s$/.test(current)?" ":"")+finalText;
+        session.received=true;
+        save();
+        var index=st.k.indexOf(customer);
+        var field=document.querySelector("#k"+index+" textarea[data-f='ag']");
+        if(field) field.value=customer.ag;
+      }
+      notice(interim?"Erkannt (vorläufig): "+interim:"Text hinzugefügt. Du kannst weitersprechen.");
+    };
+    recognition.onerror=function(event){
+      if(speechSession!==session) return;
+      session.error=true;
+      var messages={
+        "not-allowed":"Mikrofonzugriff verweigert. Bitte das Mikrofon in den Website-Einstellungen erlauben.",
+        "service-not-allowed":"Die Spracherkennung ist in diesem Browser nicht erlaubt.",
+        "audio-capture":"Kein Mikrofon verfügbar. Bitte die Mikrofoneinstellungen prüfen.",
+        "network":"Die Spracherkennung hat keine Verbindung. Bitte die Internetverbindung prüfen.",
+        "no-speech":"Keine Sprache erkannt. Bitte erneut auf Diktieren tippen.",
+        "language-not-supported":"Diese Sprache wird von der Spracherkennung auf diesem Gerät nicht unterstützt.",
+        "aborted":"Diktat beendet. Bereits hinzugefügter Text bleibt erhalten."
+      };
+      notice(messages[event.error] || "Die Spracherkennung wurde unterbrochen. Bitte erneut versuchen.");
+    };
+    recognition.onend=function(){
+      if(speechSession!==session) return;
+      speechSession=null;
+      if(!session.error) notice(session.received?(lang==="de-DE"?"Diktat hinzugefügt. Bitte den Text prüfen.":"Diktat in der gewählten Sprache hinzugefügt – noch nicht ins Deutsche übersetzt."):"Kein Text hinzugefügt. Für ein neues Diktat erneut tippen.");
+      refreshSpeechUI();
+    };
+    refreshSpeechUI();
+    try{recognition.start();}catch(e){
+      speechSession=null;
+      notice("Diktat konnte nicht gestartet werden. Bitte Mikrofon und Browser prüfen.");
+      refreshSpeechUI();
+    }
+  }
+  function speechControls(i){
+    var lang=st.k[i].speechLang || "de-DE";
+    var options=[["de-DE","Deutsch"],["sk-SK","Slowakisch"],["lt-LT","Litauisch"]].map(function(item){
+      return "<option value='"+item[0]+"'"+(lang===item[0]?" selected":"")+">"+item[1]+"</option>";
+    }).join("");
+    var hint=!SpeechRecognition || window.isSecureContext===false?"Diktieren ist in diesem Browser nicht verfügbar. Nutze alternativ das Mikrofon deiner Bildschirmtastatur.":"Die Spracherkennung kann Audio an den Dienst deines Browsers senden und eine Internetverbindung benötigen.";
+    return "<div class='speech-tools'><label for='speechLang"+i+"'>Sprache</label><select id='speechLang"+i+"' data-action='speechLang' data-i='"+i+"'>"+options+"</select>"+
+      "<button type='button' class='btn secondary' id='speechButton"+i+"' data-action='speech' data-i='"+i+"' aria-pressed='false'>🎤 Diktieren</button></div>"+
+      "<p class='speech-note'>Neues Diktat wird an den vorhandenen Text angehängt. Slowakisch und Litauisch werden noch nicht automatisch übersetzt.</p>"+
+      "<p class='speech-note'>"+hint+"</p><div class='speech-status' id='speechStatus"+i+"' role='status' aria-live='polite'></div>";
   }
   function normalizeText(value){return (value||"").toString().trim().toLowerCase();}
   function findRegistryIndex(name,address){
@@ -200,7 +334,7 @@
     render();
   }
   function addKunde(){st.k.push(newK()); save(); render(); setSel(st.k.length-1);}
-  function remKunde(){if(st.k.length<=1){alert("Mindestens 1 Kunde.");return} st.k.splice(lastSel,1); if(lastSel>=st.k.length) lastSel=st.k.length-1; save(); render(); setSel(lastSel);}
+  function remKunde(){if(st.k.length<=1){alert("Mindestens 1 Kunde.");return} if(speechSession && speechSession.customer===st.k[lastSel]) cancelSpeech(); st.k.splice(lastSel,1); if(lastSel>=st.k.length) lastSel=st.k.length-1; save(); render(); setSel(lastSel);}
   function setSel(v){lastSel=parseInt(v||"0",10)||0; var s1=document.getElementById("sel"), s2=document.getElementById("sel2"); if(s1) s1.value=String(lastSel); if(s2) s2.value=String(lastSel);}
   function scrollSel(){var el=document.getElementById("k"+lastSel); if(el) el.scrollIntoView({behavior:"smooth"});}
   function toggleSun(v){if(v==="1"){if(st.tage.indexOf("So")<0) st.tage.push("So");}else{st.tage=st.tage.filter(function(t){return t!=="So"});} fixShapes(); save(); render();}
@@ -293,7 +427,7 @@
       "</div>"+
       "<div class='grid cols2' style='margin-top:6px'>"+
         "<div><label>Auszuführende Arbeit</label><textarea data-action='setF' data-i='"+i+"' data-f='az'>"+escapeHtml(c.az)+"</textarea></div>"+
-        "<div><label>Ausgeführte Arbeit</label><textarea data-action='setF' data-i='"+i+"' data-f='ag'>"+escapeHtml(c.ag)+"</textarea></div>"+
+        "<div><label for='workDone"+i+"'>Ausgeführte Arbeit</label><textarea id='workDone"+i+"' data-action='setF' data-i='"+i+"' data-f='ag'>"+escapeHtml(c.ag)+"</textarea>"+speechControls(i)+"</div>"+
       "</div>"+
       "<div style='margin-top:8px'><b>Stunden</b><div class='hscroll'>"+
         "<table><thead><tr><th>Monteur</th>"+st.tage.map(function(t){return "<th>"+t+"</th>"}).join("")+"<th>Woche gesamt</th></tr></thead><tbody>"+rows+"</tbody></table>"+
@@ -331,6 +465,7 @@
     renderAbsence();
     setSel(lastSel);
     attachDelegatesOnce();
+    refreshSpeechUI();
 
     setTimeout(function(){
       document.querySelectorAll("#kunden tr[data-r]").forEach(function(tr){
@@ -348,11 +483,12 @@
     document.getElementById("zr").addEventListener("input",function(){st.zr=this.value;save();});
     document.getElementById("sun").addEventListener("change",function(){toggleSun(this.value);});
     document.getElementById("btnApplyTeam").addEventListener("click",applyTeam);
+    document.getElementById("btnCurrentWeek").addEventListener("click",function(){setCurrentWeek();save();render();});
 
     document.getElementById("btnWeeklyAll").addEventListener("click",printWeeklyAll);
     document.getElementById("btnPdfAllK").addEventListener("click",printAllArbeitsberichte);
     document.getElementById("btnWeeklyMonteur").addEventListener("click",function(){var r=parseInt(document.getElementById("selMonteur").value||"0",10)||0; printMonteurWeekly(r);});
-    document.getElementById("btnWipe").addEventListener("click",function(){if(confirm("Alle gespeicherten Daten löschen?")){try{localStorage.removeItem(KEY);}catch(e){} location.reload();}});
+    document.getElementById("btnWipe").addEventListener("click",wipeData);
 
     document.getElementById("btnAddK").addEventListener("click",addKunde);
     document.getElementById("btnRemK").addEventListener("click",remKunde);
@@ -364,6 +500,14 @@
     document.getElementById("btnPdfArbeitsbericht").addEventListener("click",function(){printK(lastSel);});
 
     var kc=document.getElementById("kunden");
+    kc.addEventListener("change",function(e){
+      var t=e.target;
+      if(t.dataset.action==="speechLang" && st.k[+t.dataset.i]){
+        st.k[+t.dataset.i].speechLang=t.value;
+        save();
+        speechNotice(+t.dataset.i,t.value==="de-DE"?"Diktat auf Deutsch.":"Diktat in der gewählten Sprache – ohne automatische Übersetzung.");
+      }
+    });
     kc.addEventListener("input",function(e){
       var t=e.target;
       if(t.matches("td.hcell input")){setH(+t.dataset.i,+t.dataset.r,+t.dataset.d,t.value);return;}
@@ -378,6 +522,7 @@
       else if(act==="printK") printK(i);
       else if(act==="saveReg") saveToRegistry(i);
       else if(act==="applyReg") applyFromRegistry(i);
+      else if(act==="speech") startSpeech(i);
     });
 
     var ab=document.getElementById("absence");
@@ -547,3 +692,4 @@
 </script>
 </body>
 </html>
+
