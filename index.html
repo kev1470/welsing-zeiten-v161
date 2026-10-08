@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Welsing Zeiten – v1.6.6 Kompakt + Spracheingabe</title>
+<title>Welsing Zeiten – v1.6.7 Kompakt + Spracheingabe</title>
 <meta name="theme-color" content="#E2231A">
 <style>
   :root{--bg:#0b0c10;--card:#15171c;--ink:#fff;--muted:#c7c7c9;--accent:#F28C00;--accent-ink:#1a1300;--primary:#E2231A;--line:#2a2e36;--focus:#FBB040}
@@ -39,7 +39,6 @@
   .hscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
   .hscroll table{min-width:640px}
   .speech-tools{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  .speech-tools select{width:auto;max-width:100%}
   .speech-note{font-size:12px;color:var(--muted);margin:6px 0}
   .speech-status{font-size:13px;min-height:1.4em;color:var(--focus);white-space:pre-wrap}
   .btn:disabled{opacity:.55;cursor:not-allowed}
@@ -49,7 +48,7 @@
 <body>
 <header>
   <b>Welsing Zeiten</b>
-  <div class="ver">v1.6.6 + Spracheingabe</div>
+  <div class="ver">v1.6.7 + Spracheingabe</div>
 </header>
 
 <div class="wrap">
@@ -152,46 +151,68 @@
     var el=document.getElementById("speechStatus"+i);
     if(el) el.textContent=message;
   }
+  function joinDictation(before,after){
+    if(!after) return before || "";
+    return (before || "")+(before && !/\s$/.test(before)?" ":"")+after;
+  }
   function refreshSpeechUI(){
     for(var i=0;i<st.k.length;i++){
-      var active=speechSession && speechSession.customer===st.k[i];
+      var customer=st.k[i];
+      var active=speechSession && speechSession.customer===customer;
       var button=document.getElementById("speechButton"+i);
-      var language=document.getElementById("speechLang"+i);
+      var draft=document.getElementById("speechDraft"+i);
+      var apply=document.getElementById("speechApply"+i);
       if(button){
-        button.disabled=!SpeechRecognition || window.isSecureContext===false || (!!speechSession && !active);
-        button.textContent=active?(speechSession.stopping?"Wird beendet …":"■ Diktat beenden"):"🎤 Diktieren";
+        button.disabled=!SpeechRecognition || window.isSecureContext===false || (!!speechSession && !active) || (!!active && speechSession.stopping);
+        button.textContent=active?(speechSession.stopping?"Wird beendet …":"■ Aufnahme beenden"):(customer.dictationDraft?"🎤 Weiter diktieren":"🎤 Diktieren");
         button.setAttribute("aria-pressed",active?"true":"false");
       }
-      if(language) language.disabled=!!active;
+      if(draft){draft.readOnly=!!active;draft.value=customer.dictationDraft || "";}
+      if(apply) apply.disabled=!!active || !(customer.dictationDraft || "").trim();
       if(active) speechNotice(i,speechSession.message);
     }
   }
   function cancelSpeech(){
     if(!speechSession) return;
     var session=speechSession;
-    speechSession=null; // Ignore delayed events after deletion/reset.
+    speechSession=null;
     try{session.recognition.abort();}catch(e){}
     refreshSpeechUI();
+  }
+  function applyDictation(i){
+    var customer=st.k[i];
+    if(!customer || (speechSession && speechSession.customer===customer)) return;
+    var draft=(customer.dictationDraft || "").trim();
+    if(!draft) return;
+    customer.ag=joinDictation(customer.ag,draft);
+    customer.dictationDraft="";
+    save();
+    var field=document.getElementById("workDone"+i);
+    if(field) field.value=customer.ag;
+    refreshSpeechUI();
+    speechNotice(i,"Text einmalig übernommen. Du kannst ein neues Diktat beginnen.");
   }
   function startSpeech(i){
     if(speechSession){
       if(speechSession.customer===st.k[i] && !speechSession.stopping){
         speechSession.stopping=true;
-        speechSession.message="Diktat wird abgeschlossen …";
+        speechSession.message="Aufnahme wird abgeschlossen …";
         try{speechSession.recognition.stop();}catch(e){cancelSpeech();}
         refreshSpeechUI();
       }
       return;
     }
-    if(!SpeechRecognition || window.isSecureContext===false) return;
+    if(!SpeechRecognition || window.isSecureContext===false || !st.k[i]) return;
     var customer=st.k[i];
-    var lang=customer.speechLang || "de-DE";
     var recognition=new SpeechRecognition();
-    var session={customer:customer,recognition:recognition,message:"Mikrofon wird gestartet …",stopping:false,received:false,error:false};
+    var session={customer:customer,recognition:recognition,baseDraft:customer.dictationDraft || "",message:"Mikrofon wird gestartet …",stopping:false,received:false,error:false};
     speechSession=session;
-    recognition.lang=lang;
-    recognition.continuous=true;
+    recognition.lang="de-DE";
+    // A single recognition session avoids mobile continuous-mode replay.
+    // Users can extend the draft with another explicitly started recording.
+    recognition.continuous=false;
     recognition.interimResults=true;
+    recognition.maxAlternatives=1;
     function notice(message){
       session.message=message;
       var index=st.k.indexOf(customer);
@@ -199,27 +220,22 @@
     }
     recognition.onstart=function(){
       if(speechSession!==session) return;
-      notice("Ich höre zu. Zum Abschließen auf „Diktat beenden“ tippen.");
+      notice("Ich höre zu. Der Text bleibt zunächst im Diktat-Entwurf.");
     };
     recognition.onresult=function(event){
       if(speechSession!==session || st.k.indexOf(customer)<0) return;
-      var finalText="", interim="";
-      for(var j=event.resultIndex;j<event.results.length;j++){
-        var result=event.results[j];
-        if(result.isFinal) finalText+=result[0].transcript+" ";
-        else interim+=result[0].transcript;
+      // Results are a complete snapshot, not newly appended text. Rebuild
+      // from index zero so repeated final events and interim corrections
+      // replace the same words instead of inserting them again.
+      var parts=[];
+      for(var j=0;j<event.results.length;j++){
+        if(event.results[j][0]) parts.push(event.results[j][0].transcript.trim());
       }
-      finalText=finalText.trim();
-      if(finalText){
-        var current=customer.ag || "";
-        customer.ag=current+(current && !/\s$/.test(current)?" ":"")+finalText;
-        session.received=true;
-        save();
-        var index=st.k.indexOf(customer);
-        var field=document.querySelector("#k"+index+" textarea[data-f='ag']");
-        if(field) field.value=customer.ag;
-      }
-      notice(interim?"Erkannt (vorläufig): "+interim:"Text hinzugefügt. Du kannst weitersprechen.");
+      var text=parts.filter(Boolean).join(" ");
+      session.received=!!text;
+      customer.dictationDraft=joinDictation(session.baseDraft,text);
+      save();
+      refreshSpeechUI();
     };
     recognition.onerror=function(event){
       if(speechSession!==session) return;
@@ -230,15 +246,15 @@
         "audio-capture":"Kein Mikrofon verfügbar. Bitte die Mikrofoneinstellungen prüfen.",
         "network":"Die Spracherkennung hat keine Verbindung. Bitte die Internetverbindung prüfen.",
         "no-speech":"Keine Sprache erkannt. Bitte erneut auf Diktieren tippen.",
-        "language-not-supported":"Diese Sprache wird von der Spracherkennung auf diesem Gerät nicht unterstützt.",
-        "aborted":"Diktat beendet. Bereits hinzugefügter Text bleibt erhalten."
+        "language-not-supported":"Deutsche Spracherkennung wird auf diesem Gerät nicht unterstützt.",
+        "aborted":"Aufnahme beendet. Der bisherige Entwurf bleibt erhalten."
       };
-      notice(messages[event.error] || "Die Spracherkennung wurde unterbrochen. Bitte erneut versuchen.");
+      notice((messages[event.error] || "Die Spracherkennung wurde unterbrochen. Bitte erneut versuchen.")+" Vorhandenen Entwurf bitte prüfen.");
     };
     recognition.onend=function(){
       if(speechSession!==session) return;
       speechSession=null;
-      if(!session.error) notice(session.received?(lang==="de-DE"?"Diktat hinzugefügt. Bitte den Text prüfen.":"Diktat in der gewählten Sprache hinzugefügt – noch nicht ins Deutsche übersetzt."):"Kein Text hinzugefügt. Für ein neues Diktat erneut tippen.");
+      if(!session.error) notice(session.received?"Aufnahme beendet. Entwurf prüfen, weiter diktieren oder mit „Text übernehmen“ hinzufügen.":"Keine Sprache erkannt. Für eine neue Aufnahme erneut tippen.");
       refreshSpeechUI();
     };
     refreshSpeechUI();
@@ -249,14 +265,12 @@
     }
   }
   function speechControls(i){
-    var lang=st.k[i].speechLang || "de-DE";
-    var options=[["de-DE","Deutsch"],["sk-SK","Slowakisch"],["lt-LT","Litauisch"]].map(function(item){
-      return "<option value='"+item[0]+"'"+(lang===item[0]?" selected":"")+">"+item[1]+"</option>";
-    }).join("");
-    var hint=!SpeechRecognition || window.isSecureContext===false?"Diktieren ist in diesem Browser nicht verfügbar. Nutze alternativ das Mikrofon deiner Bildschirmtastatur.":"Die Spracherkennung kann Audio an den Dienst deines Browsers senden und eine Internetverbindung benötigen.";
-    return "<div class='speech-tools'><label for='speechLang"+i+"'>Sprache</label><select id='speechLang"+i+"' data-action='speechLang' data-i='"+i+"'>"+options+"</select>"+
-      "<button type='button' class='btn secondary' id='speechButton"+i+"' data-action='speech' data-i='"+i+"' aria-pressed='false'>🎤 Diktieren</button></div>"+
-      "<p class='speech-note'>Neues Diktat wird an den vorhandenen Text angehängt. Slowakisch und Litauisch werden noch nicht automatisch übersetzt.</p>"+
+    var hint=!SpeechRecognition || window.isSecureContext===false?"Diktieren ist in diesem Browser nicht verfügbar. Nutze alternativ das Mikrofon deiner Bildschirmtastatur im Entwurfsfeld.":"Die Spracherkennung kann Audio an den Dienst deines Browsers senden und eine Internetverbindung benötigen.";
+    return "<div class='speech-tools'><button type='button' class='btn secondary' id='speechButton"+i+"' data-action='speech' data-i='"+i+"' aria-pressed='false'>🎤 Diktieren</button><span class='pill'>Deutsch</span></div>"+
+      "<p class='speech-note'>In Ruhe diktieren: Der Text erscheint zunächst als Entwurf. Endet die Aufnahme bei einer Sprechpause, kannst du mit „Weiter diktieren“ ergänzen.</p>"+
+      "<label for='speechDraft"+i+"'>Diktat-Entwurf (vor dem Übernehmen korrigierbar)</label><textarea id='speechDraft"+i+"' data-action='speechDraft' data-i='"+i+"' placeholder='Hier erscheint dein Diktat …'>"+escapeHtml(st.k[i].dictationDraft || "")+"</textarea>"+
+      "<button type='button' class='btn' id='speechApply"+i+"' data-action='applyDictation' data-i='"+i+"'>Text übernehmen</button>"+
+      "<p class='speech-note'>Erst „Text übernehmen“ hängt den Entwurf einmalig an die ausgeführte Arbeit an.</p>"+
       "<p class='speech-note'>"+hint+"</p><div class='speech-status' id='speechStatus"+i+"' role='status' aria-live='polite'></div>";
   }
   function normalizeText(value){return (value||"").toString().trim().toLowerCase();}
@@ -500,16 +514,14 @@
     document.getElementById("btnPdfArbeitsbericht").addEventListener("click",function(){printK(lastSel);});
 
     var kc=document.getElementById("kunden");
-    kc.addEventListener("change",function(e){
-      var t=e.target;
-      if(t.dataset.action==="speechLang" && st.k[+t.dataset.i]){
-        st.k[+t.dataset.i].speechLang=t.value;
-        save();
-        speechNotice(+t.dataset.i,t.value==="de-DE"?"Diktat auf Deutsch.":"Diktat in der gewählten Sprache – ohne automatische Übersetzung.");
-      }
-    });
     kc.addEventListener("input",function(e){
       var t=e.target;
+      if(t.dataset.action==="speechDraft"){
+        if(speechSession && speechSession.customer===st.k[+t.dataset.i]) return;
+        st.k[+t.dataset.i].dictationDraft=t.value;save();
+        document.getElementById("speechApply"+t.dataset.i).disabled=!t.value.trim();
+        return;
+      }
       if(t.matches("td.hcell input")){setH(+t.dataset.i,+t.dataset.r,+t.dataset.d,t.value);return;}
       if(t.matches("[data-action='setF']")){setF(+t.dataset.i,t.dataset.f,t.value);return;}
       if(t.dataset.f && t.dataset.m!==undefined){setM(+t.dataset.i,+t.dataset.m,t.dataset.f,t.value);return;}
@@ -523,6 +535,7 @@
       else if(act==="saveReg") saveToRegistry(i);
       else if(act==="applyReg") applyFromRegistry(i);
       else if(act==="speech") startSpeech(i);
+      else if(act==="applyDictation") applyDictation(i);
     });
 
     var ab=document.getElementById("absence");
